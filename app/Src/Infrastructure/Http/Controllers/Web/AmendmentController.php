@@ -1,0 +1,90 @@
+<?php
+
+namespace App\Src\Infrastructure\Http\Controllers\Web;
+
+use App\Http\Controllers\Controller;
+use App\Src\Domain\Enums\ContractStatus;
+use App\Src\Infrastructure\Persistence\Models\Contract;
+use App\Src\Infrastructure\Persistence\Models\ContractAmendment;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+use App\Src\Domain\Services\AuditService;
+
+/**
+ * Controlador para la gestión de anexos/adiciones (modificaciones) a contratos activos.
+ * Los anexos permiten modificar términos de un contrato ya activo,
+ * siempre que se acompañen de un PDF firmado que respalde el cambio.
+ */
+class AmendmentController extends Controller
+{
+    /**
+     * Lista paginada de anexos con su contrato, prospecto y creador.
+     */
+    public function index(): View
+    {
+        $amendments = ContractAmendment::with(['contract.quotation.prospect', 'createdBy'])
+            ->orderByDesc('created_at')
+            ->paginate(config('kontbox.items_per_page'));
+        return view('amendments.index', compact('amendments'));
+    }
+
+    /**
+     * Muestra el formulario para crear un anexo sobre un contrato activo.
+     * Bloqueo de seguridad: solo contratos en estado "Activo" pueden tener anexos.
+     */
+    public function create(Contract $contract): View
+    {
+        if ($contract->status !== ContractStatus::ACTIVE->value) {
+            abort(403, __('domain.amendment.only_active_contracts'));
+        }
+        $contract->load(['quotation.prospect', 'services.microservice']);
+        return view('amendments.form', compact('contract'));
+    }
+
+    /**
+     * Almacena un nuevo anexo con PDF firmado obligatorio.
+     * Regla de seguridad: el PDF firmado es obligatorio para procesar modificación.
+     * Solo se permiten anexos en contratos con estado "Activo".
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'contract_id' => 'required|exists:contracts,id',
+            'description' => 'required|string|min:10',
+            'signed_pdf' => 'required|file|mimes:pdf|max:' . config('kontbox.max_pdf_size_kb'),
+            'modified_services' => 'nullable|json',
+        ]);
+
+        $contract = Contract::findOrFail($validated['contract_id']);
+
+        if ($contract->status !== ContractStatus::ACTIVE->value) {
+            return back()->with('error', __('domain.amendment.only_active_contracts'));
+        }
+
+        $pdfPath = $validated['signed_pdf']->store('amendments/' . $contract->id);
+
+        $amendment = ContractAmendment::create([
+            'contract_id' => $contract->id,
+            'amendment_number' => 'OTR-' . now()->format('Ymd') . '-' . random_int(1000, 9999),
+            'description' => $validated['description'],
+            'signed_pdf_path' => $pdfPath,
+            'modified_services' => $validated['modified_services'] ?? null,
+            'created_by' => auth()->id(),
+        ]);
+
+        AuditService::logCreate($amendment, 'Anexo', $validated);
+
+        return to_route('contracts.show', $contract)
+            ->with('success', __('domain.amendment.created'));
+    }
+
+    /**
+     * Muestra los detalles de un anexo específico.
+     */
+    public function show(ContractAmendment $amendment): View
+    {
+        $amendment->load(['contract.quotation.prospect', 'createdBy']);
+        return view('amendments.show', compact('amendment'));
+    }
+}
