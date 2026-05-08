@@ -126,11 +126,9 @@ class ContractController extends Controller
                 $validated['signed_pdf']->getSize()
             );
 
-            AuditService::log('Cargó PDF firmado', $contract, ['file' => $validated['signed_pdf']->getClientOriginalName()], AuditService::BUSINESS);
-
             return back()->with('success', __('domain.contract.document_uploaded'));
         } catch (\DomainException $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', __($e->getMessage()));
         }
     }
 
@@ -143,40 +141,12 @@ class ContractController extends Controller
      */
     public function activate(int $id): RedirectResponse
     {
-        $contract = Contract::findOrFail($id);
-        $fromStatus = $contract->status;
         try {
             app(ActivateContractUseCase::class)->execute($id);
 
-            $contract->refresh();
-            $contract->load('services.microservice.activities');
-
-            // Crear instancias de actividad para cada actividad de los servicios del contrato
-            $created = 0;
-            foreach ($contract->services as $service) {
-                if (!$service->microservice) {
-                    continue;
-                }
-                foreach ($service->microservice->activities as $activity) {
-                    if (!$activity->is_active) {
-                        continue;
-                    }
-                    $contract->activityInstances()->firstOrCreate([
-                        'activity_id' => $activity->id,
-                    ], [
-                        'is_enabled' => true,
-                        'status' => 'pending',
-                    ]);
-                    $created++;
-                }
-            }
-
-            AuditService::logStatusChange($contract->fresh(), 'Contrato', $fromStatus, ContractStatus::ACTIVE->value);
-            AuditService::log("Se crearon {$created} instancias de actividad para el contrato", $contract, ['instances_created' => $created], AuditService::BUSINESS);
-
             return back()->with('success', __('domain.contract.activated_successfully'));
         } catch (\DomainException $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', __($e->getMessage()));
         }
     }
 
@@ -190,13 +160,11 @@ class ContractController extends Controller
             'reason' => 'required|string|min:10',
         ]);
 
-        $fromStatus = $contract->status;
         try {
             app(AnulateContractUseCase::class)->execute($contract->id, $validated['reason']);
-            AuditService::logStatusChange($contract->fresh(), 'Contrato', $fromStatus, ContractStatus::CANCELLED->value);
             return back()->with('success', __('domain.contract.anulated'));
         } catch (\DomainException $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', __($e->getMessage()));
         }
     }
 }

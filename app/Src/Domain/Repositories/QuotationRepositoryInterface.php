@@ -5,34 +5,34 @@ namespace App\Src\Domain\Repositories;
 use App\Src\Domain\Entities\Quotation;
 
 /**
- * Repository interface for Quotation aggregate persistence.
+ * Interfaz de repositorio para la persistencia del agregado Quotation.
  *
- * Defines the contract for storing and retrieving Quotation entities.
- * Implementations can use Eloquent, Doctrine, or any other data source.
+ * Define el contrato para almacenar y recuperar entidades de Quotation.
+ * Las implementaciones pueden usar Eloquent, Doctrine o cualquier otra fuente de datos.
  */
 interface QuotationRepositoryInterface
 {
     /**
-     * Finds a quotation by its primary identifier.
+     * Busca un quotation por su identificador primario.
      *
-     * @param int $id The quotation ID
-     * @return Quotation|null The quotation entity or null if not found
+     * @param int $id El ID de quotation
+     * @return Quotation|null La entidad de quotation o null si no se encuentra
      */
     public function findById(int $id): ?Quotation;
 
     /**
-     * Persists a quotation entity (insert or update).
+     * Persiste una entidad de quotation (insertar o actualizar).
      *
      * @param Quotation $quotation The quotation entity to save
      */
     public function save(Quotation $quotation): void;
 
     /**
-     * Finds the latest quotation associated with a given prospect.
-     * Used to retrieve the most recent version of a prospect's quotation.
+     * Busca la cotización más reciente asociada a un prospecto dado.
+     * Usado para recuperar la versión más reciente de la cotización de un prospecto.
      *
      * @param int $prospectId The prospect ID
-     * @return Quotation|null The latest quotation or null if none exist
+     * @return Quotation|null La cotización más reciente o null si no existe
      */
     public function findLatestByProspect(int $prospectId): ?Quotation;
 }

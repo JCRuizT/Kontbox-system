@@ -73,7 +73,7 @@ class ContractSecurityBlockTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
-            __('domain.contract.cannot_activate_without_pdf')
+            'domain.contract.cannot_activate_without_pdf'
         );
 
         $contract->activate();
@@ -100,7 +100,7 @@ class ContractSecurityBlockTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
-            __('domain.contract.cannot_activate_without_pdf')
+            'domain.contract.cannot_activate_without_pdf'
         );
 
         $contract->activate();
@@ -188,7 +188,7 @@ class ContractSecurityBlockTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
-            __('domain.contract.pending_document_status_required')
+            'domain.contract.pending_document_status_required'
         );
 
         $contract->uploadDocument(new SignedPdf('path.pdf', 'doc.pdf', 100));
@@ -209,7 +209,7 @@ class ContractSecurityBlockTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
-            __('domain.contract.only_active_can_be_cancelled')
+            'domain.contract.only_active_can_be_cancelled'
         );
 
         $contract->anulate('Razón de prueba');

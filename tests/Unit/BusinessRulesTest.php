@@ -154,7 +154,7 @@ class BusinessRulesTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
-            __('domain.contract.pending_document_status_required')
+            'domain.contract.pending_document_status_required'
         );
 
         $contractEntity = new \App\Src\Domain\Entities\Contract(

@@ -8,27 +8,27 @@ use App\Src\Domain\ValueObjects\Money;
 /**
  * Entidad que representa una cotización con inmutabilidad por versión.
  *
- * Encapsulates the quotation aggregate root with strict state machine transitions.
- * Once a quotation enters UNDER_REVIEW state, it becomes immutable to guarantee
- * audit trail integrity. Modifications require creating a new version.
+ * Encapsula la raíz del agregado de cotización con transiciones estrictas de máquina de estados.
+ * Una vez que una cotización entra en estado UNDER_REVIEW, se vuelve inmutable para garantizar
+ * la integridad del registro de auditoría. Las modificaciones requieren crear una nueva versión.
  */
 class Quotation
 {
     /**
-     * @param int|null            $id              Internal identifier, null for new entities
-     * @param string              $quoteNumber     Unique human-readable quote identifier
-     * @param int                 $prospectId      Associated prospect in the CRM
-     * @param int|null            $planId          Selected plan, nullable for custom quotes
-     * @param int                 $createdBy       User ID who created the quotation
-     * @param QuotationStatus     $status          Current state machine state
-     * @param Money               $subtotal        Net amount before taxes
-     * @param Money               $tax             Tax amount applied
-     * @param Money               $total           Gross amount (subtotal + tax)
-     * @param \DateTimeInterface|null $validUntil  Expiration date for the quote validity
-     * @param int                 $version         Version counter for immutability tracking
-     * @param int|null            $parentId        Previous version ID for audit trail
-     * @param string|null         $rejectionReason Reason if the quote was rejected
-     * @param array               $items           Collection of line items
+     * @param int|null            $id              Identificador interno, null para nuevas entidades
+     * @param string              $quoteNumber     Identificador único legible de cotización
+     * @param int                 $prospectId      Prospecto asociado en el CRM
+     * @param int|null            $planId          Plan seleccionado, nullable para cotizaciones personalizadas
+     * @param int                 $createdBy       ID del usuario que creó la cotización
+     * @param QuotationStatus     $status          Estado actual de la máquina de estados
+     * @param Money               $subtotal        Monto neto antes de impuestos
+     * @param Money               $tax             Monto de impuesto aplicado
+     * @param Money               $total           Monto bruto (subtotal + impuesto)
+     * @param \DateTimeInterface|null $validUntil  Fecha de vencimiento de la cotización
+     * @param int                 $version         Contador de versión para seguimiento de inmutabilidad
+     * @param int|null            $parentId        ID de versión anterior para registro de auditoría
+     * @param string|null         $rejectionReason Motivo si la cotización fue rechazada
+     * @param array               $items           Colección de items de línea
      */
     public function __construct(
         private ?int $id,
@@ -47,79 +47,85 @@ class Quotation
         private array $items = [],
     ) {}
 
-    /** Returns the internal database identifier. Null if not yet persisted. */
-    public function id(): ?int { return $this->id; }
+    /** Retorna el identificador interno de la base de datos. Null si aún no se ha persistido. */
+    public function id(): ?int
+{
+    return $this->id;
+}
 
-    /** Returns the unique human-readable quote number. */
-    public function quoteNumber(): string { return $this->quoteNumber; }
+    /** Retorna el número de cotización único legible. */
+    public function quoteNumber(): string
+{
+    return $this->quoteNumber;
+}
 
-    /** Returns the current state machine status of the quotation. */
-    public function status(): QuotationStatus { return $this->status; }
+    /** Retorna el estado actual de la máquina de estados de la cotización. */
+    public function status(): QuotationStatus
+{
+    return $this->status;
+}
 
-    /** Returns the version number used for immutability and audit trail. */
-    public function version(): int { return $this->version; }
+    /** Retorna el número de versión usado para inmutabilidad y registro de auditoría. */
+    public function version(): int
+{
+    return $this->version;
+}
 
-    /** Returns the collection of line items associated with this quotation. */
-    public function items(): array { return $this->items; }
+    /** Retorna la colección de items de línea asociados a esta cotización. */
+    public function items(): array
+{
+    return $this->items;
+}
 
     /**
-     * Sends the quotation to the approval workflow.
+     * Envía la cotización al flujo de aprobación.
      *
      * Regla de negocio: solo cotizaciones en borrador pueden enviarse a revisión.
      * Una vez enviada, la cotización no puede modificarse para garantizar la integridad
      * del proceso de aprobación.
      *
-     * @throws \DomainException if the current status does not allow this transition
+     * @throws \DomainException si el estado actual no permite esta transición
      */
     /** @throws \DomainException */
     public function sendForApproval(): void
     {
         if (!$this->status->canBeSentForApproval()) {
             throw new \DomainException(
-                __('domain.quotation.immutable')
+                'domain.quotation.immutable'
             );
         }
         $this->status = QuotationStatus::UNDER_REVIEW;
     }
 
     /**
-     * Approves the quotation, moving it to the APPROVED terminal state.
+     * Aprueba la cotización, moviéndola al estado terminal APPROVED.
      *
      * Regla de negocio: solo cotizaciones en revisión pueden aprobarse.
      * Una cotización aprobada está lista para ser convertida en contrato.
      *
-     * @throws \DomainException if the current status does not allow this transition
+     * @throws \DomainException si el estado actual no permite esta transición
      */
     /** @throws \DomainException */
     public function approve(): void
     {
         if (!$this->status->canBeApproved()) {
-            throw new \DomainException(__('domain.quotation.must_be_under_review_to_approve'));
+            throw new \DomainException('domain.quotation.must_be_under_review_to_approve');
         }
         $this->status = QuotationStatus::APPROVED;
     }
 
-    /**
-     * Rejects the quotation with a mandatory reason.
-     *
-     * Regla de negocio: solo cotizaciones en revisión pueden rechazarse.
-     * El motivo de rechazo es obligatorio para mantener la trazabilidad de la decisión.
-     *
-     * @param string $reason The reason why the quotation was rejected
-     * @throws \DomainException if the current status does not allow this transition
-     */
     /** @throws \DomainException */
     public function reject(string $reason): void
     {
         if (!$this->status->canBeRejected()) {
-            throw new \DomainException(__('domain.quotation.must_be_under_review_to_reject'));
+            throw new \DomainException('domain.quotation.must_be_under_review_to_reject');
         }
         $this->status = QuotationStatus::REJECTED;
         $this->rejectionReason = $reason;
     }
 
     /**
-     * Determines whether the quotation can still be modified.
+     * Determina si la cotización aún puede ser modificada.
      *
      * Regla de auditoría: cotizaciones emitidas son inmutables.
      * Solo las cotizaciones en estado DRAFT pueden ser modificadas.

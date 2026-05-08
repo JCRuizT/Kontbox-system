@@ -150,9 +150,10 @@ class QuotationController extends Controller
             }
         }
 
-        $subtotal = collect($items)->sum(fn ($i) => $i['unit_price']);
-        $tax = $subtotal * config('kontbox.tax_rate');
-        $total = $subtotal + $tax;
+        $pricing = app(\App\Src\Application\Services\QuotationPricingService::class)->calculate($items);
+        $subtotal = $pricing['subtotal'];
+        $tax = $pricing['tax'];
+        $total = $pricing['total'];
 
         $quotation = Quotation::create([
             'quote_number' => 'COT-' . now()->format('Ymd') . '-' . random_int(1000, 9999),
@@ -200,49 +201,35 @@ class QuotationController extends Controller
      */
     public function sendForApproval(int $id): RedirectResponse
     {
-        $quotation = Quotation::findOrFail($id);
         try {
             app(SendQuotationForApprovalUseCase::class)->execute($id);
-            AuditService::logStatusChange($quotation->fresh(), 'Cotización', QuotationStatus::DRAFT->value, QuotationStatus::UNDER_REVIEW->value);
             return back()->with('success', __('domain.quotation.sent_for_approval'));
         } catch (\DomainException $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', __($e->getMessage()));
         }
     }
 
-    /**
-     * Solo la gerencia comercial puede aprobar/rechazar.
-     * Aprueba una cotización y la deja lista para generar contrato.
-     */
     public function approve(int $id): RedirectResponse
     {
-        $quotation = Quotation::findOrFail($id);
         try {
             app(ApproveQuotationUseCase::class)->execute($id);
-            AuditService::logStatusChange($quotation->fresh(), 'Cotización', QuotationStatus::UNDER_REVIEW->value, QuotationStatus::APPROVED->value);
             return back()->with('success', __('domain.quotation.approved'));
         } catch (\DomainException $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', __($e->getMessage()));
         }
     }
 
-    /**
-     * Solo la gerencia comercial puede aprobar/rechazar.
-     * Rechaza una cotización con un motivo obligatorio (mín. 10 caracteres).
-     */
     public function reject(Request $request, int $id): RedirectResponse
     {
         $validated = $request->validate([
             'rejection_reason' => 'required|string|min:10',
         ]);
 
-        $quotation = Quotation::findOrFail($id);
         try {
             app(RejectQuotationUseCase::class)->execute($id, $validated['rejection_reason']);
-            AuditService::logStatusChange($quotation->fresh(), 'Cotización', QuotationStatus::UNDER_REVIEW->value, QuotationStatus::REJECTED->value);
             return back()->with('success', __('domain.quotation.rejected'));
         } catch (\DomainException $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', __($e->getMessage()));
         }
     }
 

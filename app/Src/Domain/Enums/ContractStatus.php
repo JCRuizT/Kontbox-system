@@ -3,10 +3,10 @@
 namespace App\Src\Domain\Enums;
 
 /**
- * Defines the possible states of a contract throughout its lifecycle.
+ * Define los estados posibles de un contract a lo largo de su ciclo de vida.
  *
- * Contracts follow a strict state machine: PENDING_DOCUMENT -> DOCUMENT_LOADED -> ACTIVE -> CANCELLED.
- * Security validations are enforced before each transition.
+ * Los contratos siguen una máquina de estados estricta: PENDING_DOCUMENT → DOCUMENT_LOADED → ACTIVE → CANCELLED.
+ * Validaciones de seguridad se aplican antes de cada transición.
  */
 enum ContractStatus: string
 {
@@ -23,8 +23,8 @@ enum ContractStatus: string
     case CANCELLED = 'cancelled';
 
     /**
-     * Returns the human-readable label for the current status.
-     * Uses Laravel's __() helper for i18n support.
+     * Retorna la etiqueta legible para el estado actual.
+     * Usa el helper __() de Laravel para soporte i18n.
      */
     public function label(): string
     {
@@ -32,7 +32,7 @@ enum ContractStatus: string
     }
 
     /**
-     * Checks whether a PDF document can be uploaded for this contract.
+     * Verifica si se puede cargar un documento PDF para este contrato.
      *
      * Regla de negocio: solo contratos en estado PENDING_DOCUMENT pueden recibir la carga de un PDF firmado.
      * Bloqueo de seguridad: una vez cargado el documento, no se permite sobrescribirlo para evitar
@@ -44,7 +44,7 @@ enum ContractStatus: string
     }
 
     /**
-     * Checks whether the contract can be activated.
+     * Verifica si el contrato puede ser activado.
      *
      * Regla de negocio: solo contratos con documento cargado (DOCUMENT_LOADED) pueden activarse.
      * Bloqueo de seguridad: se requiere que el PDF firmado esté registrado en el sistema antes de activar.
@@ -55,7 +55,7 @@ enum ContractStatus: string
     }
 
     /**
-     * Checks whether the contract can be cancelled/anulled.
+     * Verifica si el contrato puede ser anulado.
      *
      * Regla de negocio: solo contratos activos (ACTIVE) pueden anularse.
      * Un contrato en PENDING_DOCUMENT o DOCUMENT_LOADED debe primero activarse o gestionarse por separado.

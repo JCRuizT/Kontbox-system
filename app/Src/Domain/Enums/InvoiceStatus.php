@@ -3,9 +3,9 @@
 namespace App\Src\Domain\Enums;
 
 /**
- * Defines the possible states of an invoice through its lifecycle.
+ * Define los estados posibles de una factura a lo largo de su ciclo de vida.
  *
- * Simple three-state machine: issued -> paid or cancelled.
+ * Máquina de tres estados simple: emitida → pagada o anulada.
  */
 enum InvoiceStatus: string
 {

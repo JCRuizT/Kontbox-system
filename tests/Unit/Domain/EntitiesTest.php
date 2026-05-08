@@ -67,7 +67,7 @@ class EntitiesTest extends TestCase
         $q = new Quotation(null, 'COT-003', 1, null, 1, QuotationStatus::UNDER_REVIEW,
             new Money(100), new Money(19), new Money(119), null, 1);
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage(__('domain.quotation.immutable'));
+        $this->expectExceptionMessage('domain.quotation.immutable');
         $q->sendForApproval();
     }
 
@@ -79,7 +79,7 @@ class EntitiesTest extends TestCase
         $q = new Quotation(null, 'COT-004', 1, null, 1, QuotationStatus::APPROVED,
             new Money(100), new Money(19), new Money(119), null, 1);
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage(__('domain.quotation.immutable'));
+        $this->expectExceptionMessage('domain.quotation.immutable');
         $q->sendForApproval();
     }
 
@@ -102,7 +102,7 @@ class EntitiesTest extends TestCase
         $q = new Quotation(null, 'COT-006', 1, null, 1, QuotationStatus::DRAFT,
             new Money(100), new Money(19), new Money(119), null, 1);
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage(__('domain.quotation.must_be_under_review_to_approve'));
+        $this->expectExceptionMessage('domain.quotation.must_be_under_review_to_approve');
         $q->approve();
     }
 
@@ -125,7 +125,7 @@ class EntitiesTest extends TestCase
         $q = new Quotation(null, 'COT-008', 1, null, 1, QuotationStatus::DRAFT,
             new Money(100), new Money(19), new Money(119), null, 1);
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage(__('domain.quotation.must_be_under_review_to_reject'));
+        $this->expectExceptionMessage('domain.quotation.must_be_under_review_to_reject');
         $q->reject('Motivo');
     }
 
@@ -170,7 +170,7 @@ class EntitiesTest extends TestCase
     {
         $c = new Contract(null, 'CTR-003', 1, 1, ContractStatus::ACTIVE);
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage(__('domain.contract.pending_document_status_required'));
+        $this->expectExceptionMessage('domain.contract.pending_document_status_required');
         $c->uploadDocument(new SignedPdf('path.pdf', 'doc.pdf', 100));
     }
 
@@ -182,7 +182,7 @@ class EntitiesTest extends TestCase
     {
         $c = new Contract(null, 'CTR-004', 1, 1, ContractStatus::DOCUMENT_LOADED);
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage(__('domain.contract.cannot_activate_without_pdf'));
+        $this->expectExceptionMessage('domain.contract.cannot_activate_without_pdf');
         $c->activate();
     }
 
@@ -195,7 +195,7 @@ class EntitiesTest extends TestCase
         $c = new Contract(null, 'CTR-005', 1, 1, ContractStatus::PENDING_DOCUMENT,
             new SignedPdf('contracts/5/doc.pdf', 'doc.pdf', 100));
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage(__('domain.contract.cannot_activate_without_pdf'));
+        $this->expectExceptionMessage('domain.contract.cannot_activate_without_pdf');
         $c->activate();
     }
 
@@ -234,7 +234,7 @@ class EntitiesTest extends TestCase
     {
         $c = new Contract(null, 'CTR-008', 1, 1, ContractStatus::PENDING_DOCUMENT);
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage(__('domain.contract.only_active_can_be_cancelled'));
+        $this->expectExceptionMessage('domain.contract.only_active_can_be_cancelled');
         $c->anulate('Motivo');
     }
 

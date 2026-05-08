@@ -43,15 +43,16 @@ class QuotationApiController extends Controller
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
 
-        $subtotal = collect($validated['items'])->sum(fn ($i) => $i['unit_price']);
-        $tax = $subtotal * 0.19;
+        $pricing = app(\App\Src\Application\Services\QuotationPricingService::class)->calculate($validated['items']);
+        $subtotal = $pricing['subtotal'];
+        $tax = $pricing['tax'];
         $total = $subtotal + $tax;
 
         $quotation = Quotation::create([
             'quote_number' => 'COT-' . now()->format('Ymd') . '-' . random_int(1000, 9999),
             'prospect_id' => $validated['prospect_id'],
             'plan_id' => $validated['plan_id'] ?? null,
-            'created_by' => auth()->id() ?? $request->user()->id,
+            'created_by' => $request->user()->id,
             'status' => QuotationStatus::DRAFT->value,
             'subtotal' => $subtotal,
             'tax' => $tax,
@@ -90,47 +91,32 @@ class QuotationApiController extends Controller
      */
     public function sendForApproval(int $id): JsonResponse
     {
-        $quotation = Quotation::findOrFail($id);
-        $useCase = app(SendQuotationForApprovalUseCase::class);
         try {
-            $useCase->execute($id);
-            AuditService::logStatusChange($quotation->fresh(), 'Cotización (API)', QuotationStatus::DRAFT->value, QuotationStatus::UNDER_REVIEW->value);
+            app(SendQuotationForApprovalUseCase::class)->execute($id);
             return response()->json(['message' => __('domain.quotation.sent_for_approval')]);
         } catch (\DomainException $e) {
-            return response()->json(['error' => $e->getMessage()], 422);
+            return response()->json(['error' => __($e->getMessage())], 422);
         }
     }
 
-    /**
-     * Aprueba una cotización.
-     */
     public function approve(int $id): JsonResponse
     {
-        $quotation = Quotation::findOrFail($id);
-        $useCase = app(ApproveQuotationUseCase::class);
         try {
-            $useCase->execute($id);
-            AuditService::logStatusChange($quotation->fresh(), 'Cotización (API)', QuotationStatus::UNDER_REVIEW->value, QuotationStatus::APPROVED->value);
+            app(ApproveQuotationUseCase::class)->execute($id);
             return response()->json(['message' => __('domain.quotation.approved')]);
         } catch (\DomainException $e) {
-            return response()->json(['error' => $e->getMessage()], 422);
+            return response()->json(['error' => __($e->getMessage())], 422);
         }
     }
 
-    /**
-     * Rechaza una cotización con motivo obligatorio.
-     */
     public function reject(Request $request, int $id): JsonResponse
     {
-        $quotation = Quotation::findOrFail($id);
         $validated = $request->validate(['reason' => 'required|string|min:10']);
-        $useCase = app(RejectQuotationUseCase::class);
         try {
-            $useCase->execute($id, $validated['reason']);
-            AuditService::logStatusChange($quotation->fresh(), 'Cotización (API)', QuotationStatus::UNDER_REVIEW->value, QuotationStatus::REJECTED->value);
+            app(RejectQuotationUseCase::class)->execute($id, $validated['reason']);
             return response()->json(['message' => __('domain.quotation.rejected')]);
         } catch (\DomainException $e) {
-            return response()->json(['error' => $e->getMessage()], 422);
+            return response()->json(['error' => __($e->getMessage())], 422);
         }
     }
 }
