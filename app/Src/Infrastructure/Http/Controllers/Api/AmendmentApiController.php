@@ -4,6 +4,7 @@ namespace App\Src\Infrastructure\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Src\Domain\Enums\ContractStatus;
+use App\Src\Domain\Services\AuditService;
 use App\Src\Infrastructure\Persistence\Models\Contract;
 use App\Src\Infrastructure\Persistence\Models\ContractAmendment;
 use Illuminate\Http\JsonResponse;
@@ -54,6 +55,7 @@ class AmendmentApiController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
+        AuditService::logCreate($amendment, 'Anexo (API)', $validated);
         return response()->json($amendment, 201);
     }
 

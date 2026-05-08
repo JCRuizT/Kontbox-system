@@ -80,4 +80,14 @@ class Contract extends Model
     {
         return $this->hasMany(Invoice::class);
     }
+
+    /**
+     * Instancias de actividad asociadas a este contrato.
+     * Cada activity_instance representa una actividad del catálogo
+     * habilitada o deshabilitada para este contrato específico.
+     */
+    public function activityInstances(): HasMany
+    {
+        return $this->hasMany(ActivityInstance::class);
+    }
 }

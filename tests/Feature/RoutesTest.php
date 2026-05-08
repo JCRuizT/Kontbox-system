@@ -118,7 +118,10 @@ class RoutesTest extends TestCase
         $ms = Microservice::create(['name' => 'Srv', 'base_cost' => 50, 'type' => 'recurring']);
         $this->actingAs($this->admin)->get('/plans')->assertStatus(200);
         $this->actingAs($this->admin)->post('/plans', [
-            'name' => 'Plan Test', 'services' => [['microservice_id' => $ms->id, 'quantity' => 1]],
+            'name' => 'Plan Test',
+            'services_data' => json_encode([
+                ['microservice_id' => $ms->id, 'unit_price' => 50, 'excluded_activities' => []],
+            ]),
         ])->assertStatus(302);
         $this->assertDatabaseHas('plans', ['name' => 'Plan Test']);
     }
@@ -177,11 +180,14 @@ class RoutesTest extends TestCase
     {
         $prospect = Prospect::create(['company_name' => 'QCorp', 'contact_name' => 'C', 'email' => 'c@t.com', 'created_by' => $this->vendor->id]);
         $ms = Microservice::create(['name' => 'QSrv', 'base_cost' => 100, 'type' => 'recurring']);
+        $plan = \App\Src\Infrastructure\Persistence\Models\Plan::create(['name' => 'Test Plan']);
+        $plan->services()->create(['microservice_id' => $ms->id]);
 
         $this->actingAs($this->vendor)->get('/quotations')->assertStatus(200);
         $this->actingAs($this->vendor)->post('/quotations', [
             'prospect_id' => $prospect->id,
-            'selected_items' => json_encode([['microservice_id' => $ms->id, 'quantity' => 1, 'unit_price' => 100]]),
+            'plan_id' => $plan->id,
+            'selected_items' => json_encode([['microservice_id' => $ms->id, 'unit_price' => 100, 'excluded_activities' => []]]),
         ])->assertStatus(302);
 
         $q = Quotation::first();

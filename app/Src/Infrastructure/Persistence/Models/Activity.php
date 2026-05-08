@@ -15,13 +15,14 @@ class Activity extends Model
     protected $table = 'activities';
 
     protected $fillable = [
-        'microservice_id', 'name', 'description', 'is_active',
+        'microservice_id', 'name', 'description', 'is_active', 'is_essential',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'is_essential' => 'boolean',
         ];
     }
 

@@ -14,10 +14,10 @@ class CreateUsersSeeder extends Seeder
     public function run(): void
     {
         $users = [
-            ['name' => 'Julio Ruiz', 'email' => 'juliocruizt@gmail.com', 'password' => 'Test54321@', 'role' => 'admin'],
-            ['name' => 'Carlos Méndez', 'email' => 'gerente@kontbox.com', 'password' => 'Kontbox2026*', 'role' => 'commercial_manager'],
-            ['name' => 'María García', 'email' => 'vendedor@kontbox.com', 'password' => 'Kontbox2026*', 'role' => 'vendor'],
-            ['name' => 'Ana López', 'email' => 'administrativo@kontbox.com', 'password' => 'Kontbox2026*', 'role' => 'administrative'],
+            ['name' => 'Administrador', 'email' => 'admin@kontbox.co', 'password' => 'Test54321@', 'role' => 'admin'],
+            ['name' => 'Carlos Méndez', 'email' => 'gerente@kontbox.co', 'password' => 'Kontbox2026*', 'role' => 'commercial_manager'],
+            ['name' => 'María García', 'email' => 'vendedor@kontbox.co', 'password' => 'Kontbox2026*', 'role' => 'vendor'],
+            ['name' => 'Ana López', 'email' => 'administrativo@kontbox.co', 'password' => 'Kontbox2026*', 'role' => 'administrative'],
         ];
 
         foreach ($users as $data) {

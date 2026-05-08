@@ -4,7 +4,9 @@ namespace App\Src\Infrastructure\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Src\Domain\Services\AuditService;
+use App\Src\Infrastructure\Persistence\Models\Activity;
 use App\Src\Infrastructure\Persistence\Models\Microservice;
+use App\Src\Infrastructure\Persistence\Models\Plan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -83,15 +85,32 @@ class MicroserviceController extends Controller
     }
 
     /**
-     * Desactiva (soft delete) un microservicio y registra la auditoría de baja.
+     * Desactiva un microservicio (baja lógica) y registra auditoría.
      * No elimina físicamente el registro para mantener integridad referencial.
+     * Un microservicio desactivado no aparece en nuevos planes ni actividades,
+     * pero no afecta contratos o cotizaciones existentes (usan snapshots).
      */
     public function destroy(Microservice $microservice): RedirectResponse
     {
-        AuditService::logDelete($microservice, 'Microservicio');
         $microservice->update(['is_active' => false]);
+
+        AuditService::logDelete($microservice, 'Microservicio');
 
         return to_route('microservices.index')
             ->with('success', __('domain.microservice.deactivated'));
+    }
+
+    /**
+     * Reactiva un microservicio previamente desactivado.
+     * Vuelve a estar disponible para nuevas asignaciones en planes y actividades.
+     */
+    public function activate(Microservice $microservice): RedirectResponse
+    {
+        $microservice->update(['is_active' => true]);
+
+        AuditService::log('Reactivated microservice', $microservice, ['action' => 'activate', 'microservice_id' => $microservice->id], AuditService::CRUD);
+
+        return to_route('microservices.index')
+            ->with('success', __('domain.microservice.activated'));
     }
 }

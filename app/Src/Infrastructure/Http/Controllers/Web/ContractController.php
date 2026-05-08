@@ -80,7 +80,6 @@ class ContractController extends Controller
         foreach ($quotation->items as $item) {
             $contract->services()->create([
                 'microservice_id' => $item->microservice_id,
-                'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
                 'total_price' => $item->total_price,
             ]);
@@ -97,7 +96,12 @@ class ContractController extends Controller
      */
     public function show(Contract $contract): View
     {
-        $contract->load(['quotation.prospect', 'approvedBy', 'services.microservice', 'amendments']);
+        $contract->load([
+            'quotation.prospect',
+            'approvedBy',
+            'services.microservice',
+            'amendments',
+        ]);
         return view('contracts.show', compact('contract'));
     }
 
@@ -134,6 +138,8 @@ class ContractController extends Controller
      * Bloqueo de seguridad: no se activa sin PDF cargado.
      * Activa el contrato cambiando su estado a "Activo".
      * Verifica internamente que el PDF firmado ya fue cargado.
+     * Al activar, crea automáticamente las ActivityInstances para cada
+     * actividad de los microservicios incluidos en el contrato.
      */
     public function activate(int $id): RedirectResponse
     {
@@ -141,7 +147,33 @@ class ContractController extends Controller
         $fromStatus = $contract->status;
         try {
             app(ActivateContractUseCase::class)->execute($id);
+
+            $contract->refresh();
+            $contract->load('services.microservice.activities');
+
+            // Crear instancias de actividad para cada actividad de los servicios del contrato
+            $created = 0;
+            foreach ($contract->services as $service) {
+                if (!$service->microservice) {
+                    continue;
+                }
+                foreach ($service->microservice->activities as $activity) {
+                    if (!$activity->is_active) {
+                        continue;
+                    }
+                    $contract->activityInstances()->firstOrCreate([
+                        'activity_id' => $activity->id,
+                    ], [
+                        'is_enabled' => true,
+                        'status' => 'pending',
+                    ]);
+                    $created++;
+                }
+            }
+
             AuditService::logStatusChange($contract->fresh(), 'Contrato', $fromStatus, ContractStatus::ACTIVE->value);
+            AuditService::log("Se crearon {$created} instancias de actividad para el contrato", $contract, ['instances_created' => $created], AuditService::BUSINESS);
+
             return back()->with('success', __('domain.contract.activated_successfully'));
         } catch (\DomainException $e) {
             return back()->with('error', $e->getMessage());

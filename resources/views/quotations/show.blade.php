@@ -37,10 +37,10 @@
                 <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100"><p class="text-xs text-indigo-500 uppercase">{{ __('ui.common.total') }}</p><p class="text-lg font-bold text-indigo-600">${{ number_format($quotation->total, 2) }}</p></div>
             </div>
             <table class="w-full text-sm mb-6">
-                <thead><tr class="bg-gray-50 border-y border-gray-100"><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{{ __('ui.quotations.detail.services_heading') }}</th><th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">{{ __('ui.common.quantity') }}</th><th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">{{ __('ui.common.unit_price') }}</th><th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">{{ __('ui.common.total') }}</th></tr></thead>
+                <thead><tr class="bg-gray-50 border-y border-gray-100"><th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{{ __('ui.quotations.detail.services_heading') }}</th><th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">{{ __('ui.common.unit_price') }}</th><th class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">{{ __('ui.common.total') }}</th></tr></thead>
                 <tbody class="divide-y divide-gray-50">
                     @foreach($quotation->items as $item)
-                    <tr><td class="px-4 py-3">{{ $item->service_name_snapshot }}</td><td class="px-4 py-3 text-center">{{ $item->quantity }}</td><td class="px-4 py-3 text-right font-mono">${{ number_format($item->unit_price, 2) }}</td><td class="px-4 py-3 text-right font-mono font-medium">${{ number_format($item->total_price, 2) }}</td></tr>
+                    <tr><td class="px-4 py-3">{{ $item->service_name_snapshot }}</td><td class="px-4 py-3 text-right font-mono">${{ number_format($item->unit_price, 2) }}</td><td class="px-4 py-3 text-right font-mono font-medium">${{ number_format($item->total_price, 2) }}</td></tr>
                     @endforeach
                 </tbody>
             </table>

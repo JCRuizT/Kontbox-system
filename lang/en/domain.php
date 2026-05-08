@@ -11,6 +11,7 @@ return [
     'microservice' => [
         'created' => 'Microservice created successfully.',
         'updated' => 'Microservice updated successfully.',
+        'activated' => 'Microservice reactivated successfully.',
         'deactivated' => 'Microservice deactivated. Not available for new quotations.',
         'not_found' => 'Microservice not found.',
     ],
@@ -18,8 +19,12 @@ return [
     'plan' => [
         'created' => 'Plan created successfully.',
         'updated' => 'Plan updated successfully.',
+        'activated' => 'Plan reactivated successfully.',
         'deactivated' => 'Plan deactivated.',
         'not_found' => 'Plan not found.',
+        'activity_enabled' => 'Activity enabled in plan.',
+        'activity_disabled' => 'Activity disabled in plan.',
+        'activity_not_in_plan' => 'The activity does not belong to this plan.',
     ],
 
     'prospect' => [
@@ -111,7 +116,16 @@ return [
     'activity' => [
         'created' => 'Activity created successfully.',
         'updated' => 'Activity updated successfully.',
+        'activated' => 'Activity reactivated successfully.',
         'deactivated' => 'Activity deactivated.',
+        'permanently_deleted' => 'Activity permanently deleted from the system.',
+        'deactivated_with_relations' => 'Activity deactivated (has :count instance(s) in active contracts).',
+        'essential_cannot_deactivate' => 'Cannot deactivate an essential activity.',
+        'essential_permission_required' => 'You do not have permission to change the essential status of an activity.',
+        'essential_cannot_disable' => 'Cannot disable an essential activity in the contract.',
+        'cannot_activate_without_microservice' => 'Cannot reactivate the activity because its parent microservice is inactive.',
+        'instance_enabled' => 'Activity enabled for this contract.',
+        'instance_disabled' => 'Activity disabled for this contract.',
         'not_found' => 'Activity not found.',
         'statuses' => [
             'pending' => 'Pending',
@@ -133,6 +147,8 @@ return [
         'user_restored' => 'User restored successfully.',
         'cannot_delete_self' => 'You cannot delete yourself.',
         'cannot_delete_with_interactions' => 'Cannot delete: the user has interactions recorded in the system. You can disable it instead.',
+        'role_created' => 'Role :name created successfully.',
+        'role_renamed' => 'Role renamed from ":old" to ":new".',
         'role_permissions_updated' => 'Permissions updated for role :name.',
     ],
 

@@ -95,55 +95,56 @@ class AccountingSeedDataSeeder extends Seeder
         $this->command->info('8 microservicios contables creados.');
 
         // 3. Crear actividades para cada microservicio
+        // Las primeras 1-2 actividades de cada microservicio son esenciales (no se pueden desactivar)
         // Nómina
-        Activity::create(['microservice_id' => $msNomina->id, 'name' => 'Liquidación de nómina mensual']);
-        Activity::create(['microservice_id' => $msNomina->id, 'name' => 'Cálculo de prestaciones sociales']);
+        Activity::create(['microservice_id' => $msNomina->id, 'name' => 'Liquidación de nómina mensual', 'is_essential' => true]);
+        Activity::create(['microservice_id' => $msNomina->id, 'name' => 'Cálculo de prestaciones sociales', 'is_essential' => true]);
         Activity::create(['microservice_id' => $msNomina->id, 'name' => 'Generación de certificados laborales']);
         Activity::create(['microservice_id' => $msNomina->id, 'name' => 'Reporte de nómina a la DIAN']);
         Activity::create(['microservice_id' => $msNomina->id, 'name' => 'Soporte a trabajadores']);
 
         // Facturación Electrónica
-        Activity::create(['microservice_id' => $msFactElect->id, 'name' => 'Emisión de facturas electrónicas']);
-        Activity::create(['microservice_id' => $msFactElect->id, 'name' => 'Validación ante la DIAN']);
+        Activity::create(['microservice_id' => $msFactElect->id, 'name' => 'Emisión de facturas electrónicas', 'is_essential' => true]);
+        Activity::create(['microservice_id' => $msFactElect->id, 'name' => 'Validación ante la DIAN', 'is_essential' => true]);
         Activity::create(['microservice_id' => $msFactElect->id, 'name' => 'Envío de facturas a clientes']);
         Activity::create(['microservice_id' => $msFactElect->id, 'name' => 'Gestión de contingencia']);
         Activity::create(['microservice_id' => $msFactElect->id, 'name' => 'Reporte de facturación mensual']);
 
         // Contabilidad General
-        Activity::create(['microservice_id' => $msContabGen->id, 'name' => 'Registro de asientos contables']);
-        Activity::create(['microservice_id' => $msContabGen->id, 'name' => 'Elaboración de balance general']);
+        Activity::create(['microservice_id' => $msContabGen->id, 'name' => 'Registro de asientos contables', 'is_essential' => true]);
+        Activity::create(['microservice_id' => $msContabGen->id, 'name' => 'Elaboración de balance general', 'is_essential' => true]);
         Activity::create(['microservice_id' => $msContabGen->id, 'name' => 'Elaboración de estado de resultados']);
         Activity::create(['microservice_id' => $msContabGen->id, 'name' => 'Cierre contable mensual']);
         Activity::create(['microservice_id' => $msContabGen->id, 'name' => 'Libros oficiales (diario y mayor)']);
 
         // Gestión de Impuestos
-        Activity::create(['microservice_id' => $msImpuestos->id, 'name' => 'Liquidación de IVA mensual']);
-        Activity::create(['microservice_id' => $msImpuestos->id, 'name' => 'Declaración de renta anual']);
+        Activity::create(['microservice_id' => $msImpuestos->id, 'name' => 'Liquidación de IVA mensual', 'is_essential' => true]);
+        Activity::create(['microservice_id' => $msImpuestos->id, 'name' => 'Declaración de renta anual', 'is_essential' => true]);
         Activity::create(['microservice_id' => $msImpuestos->id, 'name' => 'Declaración de ICA']);
         Activity::create(['microservice_id' => $msImpuestos->id, 'name' => 'Cálculo de retenciones']);
         Activity::create(['microservice_id' => $msImpuestos->id, 'name' => 'Soporte a requerimientos tributarios']);
 
         // Auditoría Interna
-        Activity::create(['microservice_id' => $msAuditoria->id, 'name' => 'Revisión de procesos contables']);
-        Activity::create(['microservice_id' => $msAuditoria->id, 'name' => 'Evaluación de control interno']);
+        Activity::create(['microservice_id' => $msAuditoria->id, 'name' => 'Revisión de procesos contables', 'is_essential' => true]);
+        Activity::create(['microservice_id' => $msAuditoria->id, 'name' => 'Evaluación de control interno', 'is_essential' => true]);
         Activity::create(['microservice_id' => $msAuditoria->id, 'name' => 'Detección de riesgos financieros']);
         Activity::create(['microservice_id' => $msAuditoria->id, 'name' => 'Informe de auditoría']);
         Activity::create(['microservice_id' => $msAuditoria->id, 'name' => 'Recomendaciones de mejora']);
 
         // Conciliación Bancaria
-        Activity::create(['microservice_id' => $msConciliacion->id, 'name' => 'Conciliación mensual bancaria']);
+        Activity::create(['microservice_id' => $msConciliacion->id, 'name' => 'Conciliación mensual bancaria', 'is_essential' => true]);
         Activity::create(['microservice_id' => $msConciliacion->id, 'name' => 'Detección de diferencias']);
         Activity::create(['microservice_id' => $msConciliacion->id, 'name' => 'Ajustes contables por conciliación']);
         Activity::create(['microservice_id' => $msConciliacion->id, 'name' => 'Reporte de conciliación']);
 
         // Gestión de Cartera
-        Activity::create(['microservice_id' => $msCartera->id, 'name' => 'Seguimiento de cuentas por cobrar']);
+        Activity::create(['microservice_id' => $msCartera->id, 'name' => 'Seguimiento de cuentas por cobrar', 'is_essential' => true]);
         Activity::create(['microservice_id' => $msCartera->id, 'name' => 'Reporte de morosidad']);
         Activity::create(['microservice_id' => $msCartera->id, 'name' => 'Gestión de cobranza']);
         Activity::create(['microservice_id' => $msCartera->id, 'name' => 'Análisis de cartera por edades']);
 
         // Presupuestos
-        Activity::create(['microservice_id' => $msPresupuesto->id, 'name' => 'Diseño de presupuesto anual']);
+        Activity::create(['microservice_id' => $msPresupuesto->id, 'name' => 'Diseño de presupuesto anual', 'is_essential' => true]);
         Activity::create(['microservice_id' => $msPresupuesto->id, 'name' => 'Proyecciones financieras']);
         Activity::create(['microservice_id' => $msPresupuesto->id, 'name' => 'Seguimiento de ejecución presupuestal']);
         Activity::create(['microservice_id' => $msPresupuesto->id, 'name' => 'Análisis de variaciones']);
@@ -157,9 +158,9 @@ class AccountingSeedDataSeeder extends Seeder
             'is_active' => true,
         ]);
         $planBasico->services()->createMany([
-            ['microservice_id' => $msFactElect->id, 'quantity' => 1, 'custom_price' => 150000],
-            ['microservice_id' => $msConciliacion->id, 'quantity' => 1],
-            ['microservice_id' => $msCartera->id, 'quantity' => 1],
+            ['microservice_id' => $msFactElect->id, 'custom_price' => 150000],
+            ['microservice_id' => $msConciliacion->id],
+            ['microservice_id' => $msCartera->id],
         ]);
 
         $planEmpresarial = Plan::create([
@@ -168,11 +169,11 @@ class AccountingSeedDataSeeder extends Seeder
             'is_active' => true,
         ]);
         $planEmpresarial->services()->createMany([
-            ['microservice_id' => $msNomina->id, 'quantity' => 1],
-            ['microservice_id' => $msFactElect->id, 'quantity' => 1],
-            ['microservice_id' => $msContabGen->id, 'quantity' => 1],
-            ['microservice_id' => $msImpuestos->id, 'quantity' => 1],
-            ['microservice_id' => $msConciliacion->id, 'quantity' => 1],
+            ['microservice_id' => $msNomina->id],
+            ['microservice_id' => $msFactElect->id],
+            ['microservice_id' => $msContabGen->id],
+            ['microservice_id' => $msImpuestos->id],
+            ['microservice_id' => $msConciliacion->id],
         ]);
 
         $planCorporativo = Plan::create([
@@ -181,14 +182,14 @@ class AccountingSeedDataSeeder extends Seeder
             'is_active' => true,
         ]);
         $planCorporativo->services()->createMany([
-            ['microservice_id' => $msNomina->id, 'quantity' => 1, 'custom_price' => 220000],
-            ['microservice_id' => $msFactElect->id, 'quantity' => 1],
-            ['microservice_id' => $msContabGen->id, 'quantity' => 1, 'custom_price' => 280000],
-            ['microservice_id' => $msImpuestos->id, 'quantity' => 1, 'custom_price' => 180000],
-            ['microservice_id' => $msAuditoria->id, 'quantity' => 2],
-            ['microservice_id' => $msConciliacion->id, 'quantity' => 1],
-            ['microservice_id' => $msCartera->id, 'quantity' => 1],
-            ['microservice_id' => $msPresupuesto->id, 'quantity' => 1],
+            ['microservice_id' => $msNomina->id, 'custom_price' => 220000],
+            ['microservice_id' => $msFactElect->id],
+            ['microservice_id' => $msContabGen->id, 'custom_price' => 280000],
+            ['microservice_id' => $msImpuestos->id, 'custom_price' => 180000],
+            ['microservice_id' => $msAuditoria->id, ],
+            ['microservice_id' => $msConciliacion->id],
+            ['microservice_id' => $msCartera->id],
+            ['microservice_id' => $msPresupuesto->id],
         ]);
 
         $planTributario = Plan::create([
@@ -197,9 +198,49 @@ class AccountingSeedDataSeeder extends Seeder
             'is_active' => true,
         ]);
         $planTributario->services()->createMany([
-            ['microservice_id' => $msImpuestos->id, 'quantity' => 1],
-            ['microservice_id' => $msFactElect->id, 'quantity' => 1],
-            ['microservice_id' => $msConciliacion->id, 'quantity' => 1],
+            ['microservice_id' => $msImpuestos->id],
+            ['microservice_id' => $msConciliacion->id],
+            ['microservice_id' => $msCartera->id],
+        ]);
+
+        $planEmpresarial = Plan::create([
+            'name' => 'Plan Contable Empresarial',
+            'description' => 'Solución completa de contabilidad para medianas empresas: nómina, contabilidad general, impuestos y facturación electrónica.',
+            'is_active' => true,
+        ]);
+        $planEmpresarial->services()->createMany([
+            ['microservice_id' => $msNomina->id],
+            ['microservice_id' => $msFactElect->id],
+            ['microservice_id' => $msContabGen->id],
+            ['microservice_id' => $msImpuestos->id],
+            ['microservice_id' => $msConciliacion->id],
+        ]);
+
+        $planCorporativo = Plan::create([
+            'name' => 'Plan Contable Corporativo',
+            'description' => 'Gestión financiera integral para grandes empresas: todos los servicios contables más auditoría interna y presupuestos.',
+            'is_active' => true,
+        ]);
+        $planCorporativo->services()->createMany([
+            ['microservice_id' => $msNomina->id, 'custom_price' => 220000],
+            ['microservice_id' => $msFactElect->id],
+            ['microservice_id' => $msContabGen->id, 'custom_price' => 280000],
+            ['microservice_id' => $msImpuestos->id, 'custom_price' => 180000],
+            ['microservice_id' => $msAuditoria->id],
+            ['microservice_id' => $msConciliacion->id],
+            ['microservice_id' => $msCartera->id],
+            ['microservice_id' => $msPresupuesto->id],
+        ]);
+
+        $planTributario = Plan::create([
+            'name' => 'Plan Tributario',
+            'description' => 'Paquete especializado en impuestos y cumplimiento tributario: gestión de impuestos, facturación electrónica y conciliación.',
+            'is_active' => true,
+        ]);
+        $planTributario->services()->createMany([
+            ['microservice_id' => $msImpuestos->id],
+            ['microservice_id' => $msFactElect->id],
+            ['microservice_id' => $msConciliacion->id],
         ]);
 
         $this->command->info('4 planes contables creados.');

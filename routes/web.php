@@ -27,15 +27,33 @@ Route::middleware(['auth'])->group(function () {
     // Módulo: Configuración del sistema (Microservicios, Planes, Actividades)
 
     Route::middleware(['permission:microservices.read'])->group(function () {
-        Route::resource('microservices', MicroserviceController::class)->except(['show']);
+        Route::resource('microservices', MicroserviceController::class)->except(['show', 'destroy']);
+        Route::delete('microservices/{microservice}', [MicroserviceController::class, 'destroy'])
+            ->name('microservices.destroy')
+            ->middleware('permission:microservices.deactivate');
+        Route::post('microservices/{microservice}/activate', [MicroserviceController::class, 'activate'])
+            ->name('microservices.activate')
+            ->middleware('permission:microservices.deactivate');
     });
 
     Route::middleware(['permission:plans.read'])->group(function () {
         Route::resource('plans', PlanController::class)->except(['show']);
+        Route::post('plans/{plan}/activate', [PlanController::class, 'activate'])
+            ->name('plans.activate')
+            ->middleware('permission:plans.deactivate');
+        Route::post('plans/{plan}/activities/{activity}/toggle', [PlanController::class, 'toggleActivity'])
+            ->name('plans.activities.toggle')
+            ->middleware('permission:plans.update');
     });
 
     Route::middleware(['permission:activities.read'])->group(function () {
-        Route::resource('activities', ActivityController::class)->except(['show']);
+        Route::resource('activities', ActivityController::class)->except(['show', 'destroy']);
+        Route::delete('activities/{activity}', [ActivityController::class, 'destroy'])
+            ->name('activities.destroy')
+            ->middleware('permission:activities.deactivate');
+        Route::post('activities/{activity}/activate', [ActivityController::class, 'activate'])
+            ->name('activities.activate')
+            ->middleware('permission:activities.deactivate');
     });
 
     // Módulo: Gestión comercial (Prospectos, Cotizaciones)
@@ -55,7 +73,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('quotations.reject')
             ->middleware('permission:quotations.reject');
         Route::post('quotations/{quotation}/new-version', [QuotationController::class, 'newVersion'])
-            ->name('quotations.new-version');
+            ->name('quotations.new-version')
+            ->middleware('permission:quotations.create');
     });
 
     // Módulo: Aprobación (Panel de revisión)
@@ -76,6 +95,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('contracts/{contract}/anulate', [ContractController::class, 'anulate'])
             ->name('contracts.anulate')
             ->middleware('permission:contracts.anulate');
+
     });
 
     Route::middleware(['permission:amendments.create'])->group(function () {
@@ -89,11 +109,11 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Búsqueda dinámica (selectores AJAX)
-    Route::get('search/prospects', [SearchController::class, 'prospects'])->name('search.prospects');
-    Route::get('search/plans', [SearchController::class, 'plans'])->name('search.plans');
-    Route::get('search/microservices', [SearchController::class, 'microservices'])->name('search.microservices');
-    Route::get('search/contracts', [SearchController::class, 'contracts'])->name('search.contracts');
-    Route::get('search/users', [SearchController::class, 'users'])->name('search.users');
+    Route::get('search/prospects', [SearchController::class, 'prospects'])->name('search.prospects')->middleware('permission:prospects.read');
+    Route::get('search/plans', [SearchController::class, 'plans'])->name('search.plans')->middleware('permission:plans.read');
+    Route::get('search/microservices', [SearchController::class, 'microservices'])->name('search.microservices')->middleware('permission:microservices.read');
+    Route::get('search/contracts', [SearchController::class, 'contracts'])->name('search.contracts')->middleware('permission:contracts.read');
+    Route::get('search/users', [SearchController::class, 'users'])->name('search.users')->middleware('permission:admin.access');
 
     // Auditoría y trazabilidad
     Route::view('audit', 'audit.index')
@@ -135,7 +155,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('users/{id}/restore', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'usersRestore'])->name('users.restore');
         // Roles
         Route::get('roles', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'roles'])->name('roles');
+        Route::get('roles/create', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'rolesCreate'])->name('roles.create');
+        Route::post('roles', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'rolesStore'])->name('roles.store');
         Route::get('roles/{role}/edit', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'rolesEdit'])->name('roles.edit');
         Route::put('roles/{role}', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'rolesUpdate'])->name('roles.update');
+        Route::put('roles/{role}/rename', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'rolesRename'])->name('roles.rename');
     });
 });

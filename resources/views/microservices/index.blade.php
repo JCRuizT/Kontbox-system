@@ -42,18 +42,33 @@
                     </td>
                     <td class="px-4 sm:px-5 py-3 sm:py-4 text-right font-mono text-sm font-medium whitespace-nowrap">${{ number_format($ms->base_cost, 2) }}</td>
                     <td class="px-4 sm:px-5 py-3 sm:py-4 text-center whitespace-nowrap">
-                        <span class="badge {{ $ms->is_active ? 'badge-green' : 'badge-red' }}">
-                            <span class="badge-dot {{ $ms->is_active ? 'bg-green-500' : 'bg-red-500' }}"></span>
-                            <span>{{ $ms->is_active ? __('ui.common.active') : __('ui.common.inactive') }}</span>
-                        </span>
+                        <div class="flex items-center justify-center">
+                            @can('microservices.deactivate')
+                            <form action="{{ $ms->is_active ? route('microservices.destroy', $ms) : route('microservices.activate', $ms) }}" method="POST" onsubmit="{{ $ms->is_active ? "return confirm('".__('ui.microservices.confirm_deactivate')."')" : '' }}">
+                                @csrf
+                                @if($ms->is_active) @method('DELETE') @endif
+                                <button type="submit" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 {{ $ms->is_active ? 'bg-indigo-600' : 'bg-gray-300' }}" role="switch" aria-checked="{{ $ms->is_active ? 'true' : 'false' }}" title="{{ $ms->is_active ? __('ui.actions.deactivate') : __('ui.actions.activate') }}">
+                                    <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 {{ $ms->is_active ? 'translate-x-6' : 'translate-x-1' }}"></span>
+                                </button>
+                            </form>
+                            @endcan
+                            @cannot('microservices.deactivate')
+                            <span class="inline-flex items-center space-x-1.5 text-sm {{ $ms->is_active ? 'text-green-600' : 'text-red-500' }}">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>
+                                <span>{{ $ms->is_active ? __('ui.common.active') : __('ui.common.inactive') }}</span>
+                            </span>
+                            @endcannot
+                        </div>
                     </td>
                     <td class="px-4 sm:px-5 py-3 sm:py-4 text-right whitespace-nowrap">
-                        @can('microservices.update')
-                        <a href="{{ route('microservices.edit', $ms) }}" class="inline-flex items-center space-x-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            <span>{{ __('ui.actions.edit') }}</span>
-                        </a>
-                        @endcan
+                        <div class="flex items-center justify-end space-x-2">
+                            @can('microservices.update')
+                            <a href="{{ route('microservices.edit', $ms) }}" class="inline-flex items-center space-x-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <span class="hidden sm:inline">{{ __('ui.actions.edit') }}</span>
+                            </a>
+                            @endcan
+                        </div>
                     </td>
                 </tr>
                 @endforeach

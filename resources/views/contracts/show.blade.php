@@ -57,9 +57,14 @@
                 <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ __('ui.contracts.detail.services') }}</h3>
                 <div class="space-y-2">
                     @foreach($contract->services as $svc)
-                    <div class="flex justify-between py-2 px-4 bg-gray-50 rounded-lg text-sm">
-                        <span>{{ $svc->microservice->name ?? 'N/A' }} ×{{ $svc->quantity }}</span>
-                        <span class="font-mono font-medium">${{ number_format($svc->total_price, 2) }}</span>
+                    <div class="flex justify-between py-2 px-4 rounded-lg text-sm {{ $svc->is_enabled ? 'bg-gray-50' : 'bg-gray-100 opacity-60' }}">
+                        <div class="flex items-center space-x-2">
+                            @if(!$svc->is_enabled)
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636"/></svg>
+                            @endif
+                            <span class="{{ $svc->is_enabled ? '' : 'text-gray-400 line-through' }}">{{ $svc->microservice->name ?? 'N/A' }}</span>
+                        </div>
+                        <span class="font-mono font-medium {{ $svc->is_enabled ? '' : 'text-gray-400' }}">${{ number_format($svc->total_price, 2) }}</span>
                     </div>
                     @endforeach
                 </div>

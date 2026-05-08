@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Src\Application\UseCases\Contracts\ActivateContractUseCase;
 use App\Src\Application\UseCases\Contracts\AnulateContractUseCase;
 use App\Src\Application\UseCases\Contracts\UploadDocumentUseCase;
+use App\Src\Domain\Enums\ContractStatus;
+use App\Src\Domain\Services\AuditService;
 use App\Src\Infrastructure\Persistence\Models\Contract;
 use App\Src\Infrastructure\Persistence\Models\Quotation;
 use Illuminate\Http\JsonResponse;
@@ -58,13 +60,13 @@ class ContractApiController extends Controller
         foreach ($quotation->items as $item) {
             $contract->services()->create([
                 'microservice_id' => $item->microservice_id,
-                'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
                 'total_price' => $item->total_price,
             ]);
         }
 
         $contract->load('services');
+        AuditService::logCreate($contract, 'Contrato (API)', $validated);
         return response()->json($contract, 201);
     }
 
@@ -97,6 +99,7 @@ class ContractApiController extends Controller
                 $validated['signed_pdf']->getSize()
             );
 
+            AuditService::log('Cargó PDF firmado (API)', $contract, ['file' => $validated['signed_pdf']->getClientOriginalName()], AuditService::BUSINESS);
             return response()->json(['message' => __('domain.contract.document_uploaded')]);
         } catch (\DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
@@ -108,9 +111,12 @@ class ContractApiController extends Controller
      */
     public function activate(int $id): JsonResponse
     {
+        $contract = Contract::findOrFail($id);
+        $fromStatus = $contract->status;
         $useCase = app(ActivateContractUseCase::class);
         try {
             $useCase->execute($id);
+            AuditService::logStatusChange($contract->fresh(), 'Contrato (API)', $fromStatus, ContractStatus::ACTIVE->value);
             return response()->json(['message' => __('domain.contract.activated_successfully')]);
         } catch (\DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
@@ -123,9 +129,11 @@ class ContractApiController extends Controller
     public function anulate(Request $request, Contract $contract): JsonResponse
     {
         $validated = $request->validate(['reason' => 'required|string|min:10']);
+        $fromStatus = $contract->status;
         $useCase = app(AnulateContractUseCase::class);
         try {
             $useCase->execute($contract->id, $validated['reason']);
+            AuditService::logStatusChange($contract->fresh(), 'Contrato (API)', $fromStatus, ContractStatus::CANCELLED->value);
             return response()->json(['message' => __('domain.contract.anulated')]);
         } catch (\DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 422);

@@ -38,7 +38,11 @@ class AmendmentController extends Controller
         if ($contract->status !== ContractStatus::ACTIVE->value) {
             abort(403, __('domain.amendment.only_active_contracts'));
         }
-        $contract->load(['quotation.prospect', 'services.microservice']);
+        $contract->load([
+            'quotation.prospect',
+            'services.microservice.activities',
+            'activityInstances.activity',
+        ]);
         return view('amendments.form', compact('contract'));
     }
 
@@ -63,6 +67,49 @@ class AmendmentController extends Controller
         }
 
         $pdfPath = $validated['signed_pdf']->store('amendments/' . $contract->id);
+
+        // Procesar cambios de servicios y actividades si se enviaron
+        $modifiedServices = $validated['modified_services'] ?? null;
+        if ($modifiedServices) {
+            $parsed = json_decode($modifiedServices, true);
+            if (is_array($parsed)) {
+                // Procesar cambios en servicios (microservicios del contrato)
+                if (isset($parsed['services'])) {
+                    $contract->load('services.microservice.activities');
+                    foreach ($parsed['services'] as $key => $enabled) {
+                        if (str_starts_with($key, 'svc_')) {
+                            $serviceId = substr($key, 4);
+                            // No permitir deshabilitar un servicio que tenga actividades esenciales
+                            if (!$enabled) {
+                                $svc = $contract->services->firstWhere('id', $serviceId);
+                                if ($svc && $svc->microservice) {
+                                    $hasEssential = $svc->microservice->activities->contains('is_essential', true);
+                                    if ($hasEssential) {
+                                        continue;
+                                    }
+                                }
+                            }
+                            $contract->services()->where('id', $serviceId)->update(['is_enabled' => $enabled]);
+                        }
+                    }
+                }
+                // Procesar cambios en actividades
+                if (isset($parsed['activities'])) {
+                    foreach ($parsed['activities'] as $activityId => $enabled) {
+                        $instance = $contract->activityInstances()
+                            ->where('activity_id', $activityId)
+                            ->first();
+                        if ($instance) {
+                            $activity = $instance->activity;
+                            if ($activity && $activity->is_essential && !$enabled) {
+                                continue;
+                            }
+                            $instance->update(['is_enabled' => $enabled]);
+                        }
+                    }
+                }
+            }
+        }
 
         $amendment = ContractAmendment::create([
             'contract_id' => $contract->id,

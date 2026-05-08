@@ -14,7 +14,7 @@ class PlanService extends Model
     protected $table = 'plan_services';
 
     protected $fillable = [
-        'plan_id', 'microservice_id', 'quantity', 'custom_price',
+        'plan_id', 'microservice_id', 'custom_price',
     ];
 
     /**

@@ -15,8 +15,15 @@ class ActivityInstance extends Model
     protected $table = 'activity_instances';
 
     protected $fillable = [
-        'contract_id', 'activity_id', 'status',
+        'contract_id', 'activity_id', 'status', 'is_enabled',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_enabled' => 'boolean',
+        ];
+    }
 
     /**
      * Contrato al que pertenece esta instancia de actividad.

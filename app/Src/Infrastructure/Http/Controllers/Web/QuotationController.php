@@ -50,10 +50,9 @@ class QuotationController extends Controller
                 'id' => $s->microservice_id,
                 'name' => $s->microservice->name,
                 'base_cost' => $s->microservice->base_cost,
-                'quantity' => $s->quantity,
                 'custom_price' => $s->custom_price ?? $s->microservice->base_cost,
                 'activities' => $s->microservice->activities
-                    ? $s->microservice->activities->map(fn ($a) => ['id' => $a->id, 'name' => $a->name])->toArray()
+                    ? $s->microservice->activities->map(fn ($a) => ['id' => $a->id, 'name' => $a->name, 'essential' => $a->is_essential])->toArray()
                     : [],
             ])->toArray(),
         ])->toArray();
@@ -86,19 +85,25 @@ class QuotationController extends Controller
     {
         $validated = $request->validate([
             'prospect_id' => 'required|exists:prospects,id',
-            'plan_id' => 'nullable|exists:plans,id',
+            'plan_id' => 'required|exists:plans,id',
             'valid_until' => 'nullable|date|after:today',
             'selected_items' => 'nullable|json',
             'items' => 'nullable|array|min:1',
             'items.*.microservice_id' => 'required_with:items|exists:microservices,id',
-            'items.*.quantity' => 'required_with:items|integer|min:1',
             'items.*.unit_price' => 'required_with:items|numeric|min:0',
         ]);
 
-        // Parse items from JSON (new form) or array (legacy)
         $items = [];
+        $excludedActivities = [];
         if ($request->filled('selected_items')) {
-            $items = json_decode($validated['selected_items'], true);
+            $decoded = json_decode($validated['selected_items'], true);
+            foreach ($decoded as $it) {
+                $items[] = [
+                    'microservice_id' => $it['microservice_id'],
+                    'unit_price' => $it['unit_price'],
+                ];
+                $excludedActivities[$it['microservice_id']] = $it['excluded_activities'] ?? [];
+            }
         } elseif ($request->has('items')) {
             $items = $validated['items'];
         }
@@ -107,15 +112,52 @@ class QuotationController extends Controller
             return back()->withInput()->with('error', __('domain.quotation.at_least_one_service'));
         }
 
-        $subtotal = collect($items)->sum(fn ($i) => $i['quantity'] * $i['unit_price']);
+        // Custom plan logic: compare items with base plan services
+        $plan = Plan::with('services')->find($validated['plan_id']);
+        $customPlanId = $plan->id;
+
+        if ($plan) {
+            $planServices = $plan->services->map(fn ($s) => [
+                'microservice_id' => $s->microservice_id,
+                'unit_price' => $s->custom_price ?? $s->microservice->base_cost,
+            ])->toArray();
+
+            // Normalize for comparison (sort by microservice_id)
+            $sortItems = fn ($arr) => collect($arr)->sortBy('microservice_id')->values()->toArray();
+            $planNormalized = $sortItems($planServices);
+            $itemsNormalized = $sortItems($items);
+
+            if ($planNormalized !== $itemsNormalized) {
+                // Create custom plan based on the original
+                $customPlan = Plan::create([
+                    'name' => $plan->name . ' (Personalizado)',
+                    'description' => $plan->description,
+                    'is_active' => true,
+                    'is_custom' => true,
+                    'parent_plan_id' => $plan->id,
+                ]);
+                foreach ($items as $it) {
+                    $customPlan->services()->create([
+                        'microservice_id' => $it['microservice_id'],
+                        'custom_price' => $it['unit_price'],
+                    ]);
+                }
+                $customPlanId = $customPlan->id;
+
+                AuditService::logBusiness(
+                    "Creó plan personalizado #{$customPlan->id} a partir del plan base #{$plan->id} para cotización del prospecto #{$validated['prospect_id']}"
+                );
+            }
+        }
+
+        $subtotal = collect($items)->sum(fn ($i) => $i['unit_price']);
         $tax = $subtotal * config('kontbox.tax_rate');
         $total = $subtotal + $tax;
 
-        // Regla de auditoría: la cotización se crea en estado Borrador (draft)
         $quotation = Quotation::create([
             'quote_number' => 'COT-' . now()->format('Ymd') . '-' . random_int(1000, 9999),
             'prospect_id' => $validated['prospect_id'],
-            'plan_id' => $validated['plan_id'] ?? null,
+            'plan_id' => $customPlanId,
             'created_by' => auth()->id(),
             'status' => QuotationStatus::DRAFT->value,
             'subtotal' => $subtotal,
@@ -126,18 +168,19 @@ class QuotationController extends Controller
         ]);
 
         foreach ($items as $item) {
-            $ms = Microservice::find($item['microservice_id']);
+            $ms = Microservice::with('activities')->find($item['microservice_id']);
             $quotation->items()->create([
                 'microservice_id' => $item['microservice_id'],
                 'service_name_snapshot' => $ms->name,
                 'description_snapshot' => $ms->description,
-                'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'],
-                'total_price' => $item['quantity'] * $item['unit_price'],
+                'total_price' => $item['unit_price'],
+                'excluded_activities' => $excludedActivities[$item['microservice_id']] ?? [],
             ]);
         }
 
-        AuditService::logCreate($quotation, 'Cotización', $validated);
+        $logData = array_merge($validated, ['custom_plan' => $customPlanId !== $plan->id, 'excluded_activities' => $excludedActivities]);
+        AuditService::logCreate($quotation, 'Cotización', $logData);
 
         return to_route('quotations.index')
             ->with('success', __('domain.quotation.created'));

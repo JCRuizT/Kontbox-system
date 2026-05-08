@@ -12,6 +12,7 @@ return [
     'microservice' => [
         'created' => 'Microservicio creado exitosamente.',
         'updated' => 'Microservicio actualizado exitosamente.',
+        'activated' => 'Microservicio reactivado exitosamente.',
         'deactivated' => 'Microservicio desactivado. No disponible para nuevas cotizaciones.',
         'not_found' => 'Microservicio no encontrado.',
     ],
@@ -20,8 +21,12 @@ return [
     'plan' => [
         'created' => 'Plan creado exitosamente.',
         'updated' => 'Plan actualizado exitosamente.',
+        'activated' => 'Plan reactivado exitosamente.',
         'deactivated' => 'Plan desactivado.',
         'not_found' => 'Plan no encontrado.',
+        'activity_enabled' => 'Actividad habilitada en el plan.',
+        'activity_disabled' => 'Actividad deshabilitada en el plan.',
+        'activity_not_in_plan' => 'La actividad no pertenece a este plan.',
     ],
 
     // Prospectos
@@ -120,7 +125,16 @@ return [
     'activity' => [
         'created' => 'Actividad creada exitosamente.',
         'updated' => 'Actividad actualizada exitosamente.',
+        'activated' => 'Actividad reactivada exitosamente.',
         'deactivated' => 'Actividad desactivada.',
+        'permanently_deleted' => 'Actividad eliminada físicamente del sistema.',
+        'deactivated_with_relations' => 'Actividad desactivada (tiene :count instancia(s) en contratos activos).',
+        'essential_cannot_deactivate' => 'No se puede desactivar una actividad esencial.',
+        'essential_permission_required' => 'No tiene permisos para cambiar el estado esencial de una actividad.',
+        'essential_cannot_disable' => 'No se puede deshabilitar una actividad esencial en el contrato.',
+        'cannot_activate_without_microservice' => 'No se puede reactivar la actividad porque su microservicio padre está inactivo.',
+        'instance_enabled' => 'Actividad habilitada para este contrato.',
+        'instance_disabled' => 'Actividad deshabilitada para este contrato.',
         'not_found' => 'Actividad no encontrada.',
         'statuses' => [
             'pending' => 'Pendiente',
@@ -142,6 +156,8 @@ return [
         'user_restored' => 'Usuario restaurado exitosamente.',
         'cannot_delete_self' => 'No puede eliminarse a sí mismo.',
         'cannot_delete_with_interactions' => 'No se puede eliminar: el usuario tiene interacciones registradas en el sistema. Puede deshabilitarlo en su lugar.',
+        'role_created' => 'Rol :name creado exitosamente.',
+        'role_renamed' => 'Rol renombrado de ":old" a ":new".',
         'role_permissions_updated' => 'Permisos actualizados para el rol :name.',
     ],
 

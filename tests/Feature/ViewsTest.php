@@ -108,7 +108,7 @@ class ViewsTest extends TestCase
     {
         $ms = Microservice::create(['name' => 'PlanSrv', 'base_cost' => 50, 'type' => 'recurring']);
         $plan = Plan::create(['name' => 'Plan Premium']);
-        $plan->services()->create(['microservice_id' => $ms->id, 'quantity' => 2]);
+        $plan->services()->create(['microservice_id' => $ms->id]);
         $this->actingAs($this->admin)
             ->get(route('plans.index'))
             ->assertStatus(200)

@@ -3,6 +3,7 @@
 namespace App\Src\Infrastructure\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Src\Domain\Services\AuditService;
 use App\Src\Infrastructure\Persistence\Models\Microservice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ class MicroserviceApiController extends Controller
         ]);
 
         $microservice = Microservice::create($validated);
+        AuditService::logCreate($microservice, 'Microservicio (API)', $validated);
         return response()->json($microservice, 201);
     }
 
@@ -57,7 +59,9 @@ class MicroserviceApiController extends Controller
             'type' => 'sometimes|in:recurring,one_time',
         ]);
 
+        $original = $microservice->getOriginal();
         $microservice->update($validated);
+        AuditService::logUpdate($microservice, 'Microservicio (API)', $original, $microservice->getChanges());
         return response()->json($microservice);
     }
 
@@ -66,6 +70,7 @@ class MicroserviceApiController extends Controller
      */
     public function destroy(Microservice $microservice): JsonResponse
     {
+        AuditService::logDelete($microservice, 'Microservicio (API)');
         $microservice->update(['is_active' => false]);
         return response()->json(['message' => __('domain.microservice.deactivated')]);
     }

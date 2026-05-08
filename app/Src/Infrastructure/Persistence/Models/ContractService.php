@@ -15,18 +15,19 @@ class ContractService extends Model
     protected $table = 'contract_services';
 
     protected $fillable = [
-        'contract_id', 'microservice_id', 'quantity',
-        'unit_price', 'total_price',
+        'contract_id', 'microservice_id', 'unit_price', 'total_price', 'is_enabled',
     ];
 
     /**
      * unit_price/total_price: valores monetarios con 2 decimales.
+     * is_enabled: indica si el servicio está activo en el contrato.
      */
     protected function casts(): array
     {
         return [
             'unit_price' => 'decimal:2',
             'total_price' => 'decimal:2',
+            'is_enabled' => 'boolean',
         ];
     }
 

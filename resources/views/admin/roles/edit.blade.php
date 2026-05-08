@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', __('ui.admin_roles.edit_title', ['name' => $role->name]))
+@section('title', isset($role) ? __('ui.admin_roles.edit_title', ['name' => $role->name]) : __('ui.admin_roles.create_title'))
 @section('content')
 <div class="max-w-6xl mx-auto fade-in">
     <div class="flex items-center space-x-4 mb-8">
@@ -7,14 +7,32 @@
             <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
         </div>
         <div>
-            <h2 class="text-2xl font-bold text-gray-900">{{ __('ui.admin_roles.permissions_heading') }} <span class="text-indigo-600">{{ ucfirst(str_replace('_', ' ', $role->name)) }}</span></h2>
-            <p class="text-sm text-gray-500">{{ __('ui.admin_roles.edit_description') }}</p>
+            <h2 class="text-2xl font-bold text-gray-900">{!! isset($role) ? __('ui.admin_roles.permissions_heading') . ' <span class="text-indigo-600">' . e(ucfirst(str_replace('_', ' ', $role->name))) . '</span>' : e(__('ui.admin_roles.create_title')) !!}</h2>
+            <p class="text-sm text-gray-500">{{ isset($role) ? __('ui.admin_roles.edit_description') : __('ui.admin_roles.create_description') }}</p>
         </div>
     </div>
 
-    <form action="{{ route('admin.roles.update', $role) }}" method="POST" class="space-y-6" novalidate>
+    <form action="{{ isset($role) ? route('admin.roles.update', $role) : route('admin.roles.store') }}" method="POST" class="space-y-6" novalidate>
         @csrf
-        @method('PUT')
+        @if(isset($role)) @method('PUT') @endif
+
+        @if(isset($role))
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 flex items-center space-x-3">
+            <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div>
+                <p class="text-sm font-medium text-gray-700">{{ __('ui.admin_roles.name_label') }}: <span class="text-indigo-600 font-semibold">{{ $role->name }}</span></p>
+                <p class="text-xs text-gray-400">{{ __('ui.admin_roles.rename_from_index') }}</p>
+            </div>
+        </div>
+        @else
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <label class="form-label">{{ __('ui.admin_roles.name_label') }} <span class="required">*</span></label>
+            <input type="text" name="name" value="{{ old('name', '') }}"
+                class="form-input block w-full max-w-md px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:border-indigo-500 @error('name') error @enderror"
+                placeholder="{{ __('ui.admin_roles.name_placeholder') }}">
+            @error('name') <p class="mt-1.5 text-sm text-red-500">{{ $message }}</p> @enderror
+        </div>
+        @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             @foreach($groupedPermissions as $module => $perms)

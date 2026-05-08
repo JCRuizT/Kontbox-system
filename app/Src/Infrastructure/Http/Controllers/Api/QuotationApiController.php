@@ -7,6 +7,7 @@ use App\Src\Application\UseCases\Quotations\ApproveQuotationUseCase;
 use App\Src\Application\UseCases\Quotations\RejectQuotationUseCase;
 use App\Src\Application\UseCases\Quotations\SendQuotationForApprovalUseCase;
 use App\Src\Domain\Enums\QuotationStatus;
+use App\Src\Domain\Services\AuditService;
 use App\Src\Infrastructure\Persistence\Models\Microservice;
 use App\Src\Infrastructure\Persistence\Models\Quotation;
 use Illuminate\Http\JsonResponse;
@@ -39,11 +40,10 @@ class QuotationApiController extends Controller
             'valid_until' => 'nullable|date|after:today',
             'items' => 'required|array|min:1',
             'items.*.microservice_id' => 'required|exists:microservices,id',
-            'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
 
-        $subtotal = collect($validated['items'])->sum(fn ($i) => $i['quantity'] * $i['unit_price']);
+        $subtotal = collect($validated['items'])->sum(fn ($i) => $i['unit_price']);
         $tax = $subtotal * 0.19;
         $total = $subtotal + $tax;
 
@@ -66,13 +66,13 @@ class QuotationApiController extends Controller
                 'microservice_id' => $item['microservice_id'],
                 'service_name_snapshot' => $ms->name,
                 'description_snapshot' => $ms->description,
-                'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'],
-                'total_price' => $item['quantity'] * $item['unit_price'],
+                'total_price' => $item['unit_price'],
             ]);
         }
 
         $quotation->load('items');
+        AuditService::logCreate($quotation, 'Cotización (API)', $validated);
         return response()->json($quotation, 201);
     }
 
@@ -90,9 +90,11 @@ class QuotationApiController extends Controller
      */
     public function sendForApproval(int $id): JsonResponse
     {
+        $quotation = Quotation::findOrFail($id);
         $useCase = app(SendQuotationForApprovalUseCase::class);
         try {
             $useCase->execute($id);
+            AuditService::logStatusChange($quotation->fresh(), 'Cotización (API)', QuotationStatus::DRAFT->value, QuotationStatus::UNDER_REVIEW->value);
             return response()->json(['message' => __('domain.quotation.sent_for_approval')]);
         } catch (\DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
@@ -104,9 +106,11 @@ class QuotationApiController extends Controller
      */
     public function approve(int $id): JsonResponse
     {
+        $quotation = Quotation::findOrFail($id);
         $useCase = app(ApproveQuotationUseCase::class);
         try {
             $useCase->execute($id);
+            AuditService::logStatusChange($quotation->fresh(), 'Cotización (API)', QuotationStatus::UNDER_REVIEW->value, QuotationStatus::APPROVED->value);
             return response()->json(['message' => __('domain.quotation.approved')]);
         } catch (\DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
@@ -118,10 +122,12 @@ class QuotationApiController extends Controller
      */
     public function reject(Request $request, int $id): JsonResponse
     {
-        $validated = $request->validate(['reason' => 'required|string|min:5']);
+        $quotation = Quotation::findOrFail($id);
+        $validated = $request->validate(['reason' => 'required|string|min:10']);
         $useCase = app(RejectQuotationUseCase::class);
         try {
             $useCase->execute($id, $validated['reason']);
+            AuditService::logStatusChange($quotation->fresh(), 'Cotización (API)', QuotationStatus::UNDER_REVIEW->value, QuotationStatus::REJECTED->value);
             return response()->json(['message' => __('domain.quotation.rejected')]);
         } catch (\DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 422);

@@ -33,7 +33,8 @@
                         label="{{ __('ui.quotations.select_plan') }}"
                         placeholder="{{ __('ui.quotations_form.search_plan') }}"
                         search-url="{{ route('search.plans') }}"
-                        :options="$initialPlans" />
+                        :options="$initialPlans"
+                        :required="true" />
                 </div>
             </div>
             <div>
@@ -43,7 +44,7 @@
             </div>
         </div>
 
-        {{-- SERVICIOS POR ACTIVIDAD --}}
+        {{-- SERVICIOS --}}
         <div id="services-root" class="space-y-4">
             <div class="flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-gray-700">{{ __('ui.quotations.selected_services') }} <span id="selected-count" class="text-indigo-600">(0)</span></h3>
@@ -70,13 +71,13 @@
                 </div>
                 <div class="space-y-2">
                     @foreach($allMicroservices as $ms)
-                    @php $msActs = $ms->activities->map(fn($a)=>['id'=>$a->id,'name'=>$a->name])->values()->toArray(); @endphp
+                    @php $firstAct = $ms->activities->first(); $actCount = $ms->activities->count(); @endphp
                     <div class="flex items-center justify-between p-3 rounded-xl border border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/30 transition cursor-pointer"
-                         onclick="addServiceToQuote({{ $ms->id }}, '{{ addslashes($ms->name) }}', {{ $ms->base_cost }}, {{ json_encode($msActs) }})">
+                         onclick="addServiceToQuote({{ $ms->id }})">
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-semibold text-gray-900">{{ $ms->name }}</p>
                             <p class="text-xs text-gray-400 mt-0.5">${{ number_format($ms->base_cost, 2) }}
-                                @if(count($msActs) > 0) · <span class="text-cyan-600">{{ $msActs[0]['name'] }}{{ count($msActs) > 1 ? ' (+' . (count($msActs)-1) . ' más)' : '' }}</span> @endif
+                                @if($firstAct) · <span class="text-cyan-600">{{ $firstAct->name }}{{ $actCount > 1 ? ' (+' . ($actCount-1) . ' más)' : '' }}</span> @endif
                             </p>
                         </div>
                         <svg class="w-5 h-5 text-indigo-400 flex-shrink-0 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -98,6 +99,23 @@
 <script>
 const plansData = {!! $plansDataJson !!};
 let selectedServices = {};
+let excludedActivities = {};
+@php
+    $quoteMsData = [];
+    foreach ($allMicroservices as $ms) {
+        $acts = [];
+        foreach ($ms->activities as $act) {
+            $acts[] = ['id' => $act->id, 'name' => $act->name, 'essential' => $act->is_essential];
+        }
+        $quoteMsData[$ms->id] = [
+            'id' => $ms->id,
+            'name' => $ms->name,
+            'base_cost' => $ms->base_cost,
+            'activities' => $acts,
+        ];
+    }
+@endphp
+let quoteFormMicroservices = @json($quoteMsData);
 
 document.addEventListener('change', function(e) {
     if (e.target && e.target.name === 'plan_id') {
@@ -111,30 +129,30 @@ function loadPlanServices(planId) {
     if (!services) return;
     services.forEach(s => {
         if (selectedServices[s.id]) {
-            selectedServices[s.id].quantity = s.quantity;
             selectedServices[s.id].unit_price = s.custom_price || s.base_cost;
             selectedServices[s.id].activities = s.activities || [];
-            selectedServices[s.id].activity_name = s.activities && s.activities.length ? s.activities[0].name : null;
         } else {
             selectedServices[s.id] = {
-                id: s.id, name: s.name, quantity: s.quantity, unit_price: s.custom_price || s.base_cost,
-                activities: s.activities || [], activity_name: s.activities && s.activities.length ? s.activities[0].name : null,
-                enabled: true, activity_enabled: true
+                id: s.id, name: s.name, unit_price: s.custom_price || s.base_cost,
+                activities: s.activities || [], enabled: true
             };
+            if (!excludedActivities[s.id]) excludedActivities[s.id] = [];
         }
     });
     renderServicesList();
 }
 
-function addServiceToQuote(id, name, baseCost, activities) {
+function addServiceToQuote(id) {
+    const data = quoteFormMicroservices[id];
+    if (!data) return;
     if (selectedServices[id]) {
         selectedServices[id].enabled = true;
     } else {
         selectedServices[id] = {
-            id, name, quantity: 1, unit_price: baseCost,
-            activities: activities || [], activity_name: activities && activities.length ? activities[0].name : null,
-            enabled: true, activity_enabled: true
+            id, name: data.name, unit_price: data.base_cost,
+            activities: data.activities || [], enabled: true
         };
+        if (!excludedActivities[id]) excludedActivities[id] = [];
     }
     renderServicesList();
     document.getElementById('add-service-modal').classList.add('hidden');
@@ -146,28 +164,10 @@ function toggleService(id) {
     renderServicesList();
 }
 
-function toggleActivity(name) {
-    const ids = Object.keys(selectedServices);
-    const affected = ids.filter(id => selectedServices[id].activity_name === name);
-    const allEnabled = affected.every(id => selectedServices[id].enabled && selectedServices[id].activity_enabled);
-    const newState = !allEnabled;
-    affected.forEach(id => {
-        selectedServices[id].activity_enabled = newState;
-        selectedServices[id].enabled = newState;
-    });
-    renderServicesList();
-}
-
 function removeService(id) {
     delete selectedServices[id];
+    delete excludedActivities[id];
     renderServicesList();
-}
-
-function updateQuantity(id, value) {
-    if (selectedServices[id]) {
-        selectedServices[id].quantity = Math.max(1, parseInt(value) || 1);
-    }
-    syncHiddenInput();
 }
 
 function updatePrice(id, value) {
@@ -175,6 +175,17 @@ function updatePrice(id, value) {
         selectedServices[id].unit_price = parseFloat(value) || 0;
     }
     syncHiddenInput();
+}
+
+function toggleActivity(msId, actId) {
+    if (!excludedActivities[msId]) excludedActivities[msId] = [];
+    const idx = excludedActivities[msId].indexOf(actId);
+    if (idx > -1) {
+        excludedActivities[msId].splice(idx, 1);
+    } else {
+        excludedActivities[msId].push(actId);
+    }
+    renderServicesList();
 }
 
 function renderServicesList() {
@@ -194,51 +205,10 @@ function renderServicesList() {
     }
     if (noMsg) noMsg.style.display = 'none';
 
-    // Group by activity
-    const grouped = {};
-    const ungrouped = [];
+    let html = '';
     ids.forEach(id => {
         const s = selectedServices[id];
-        if (s.activity_name) {
-            if (!grouped[s.activity_name]) grouped[s.activity_name] = [];
-            grouped[s.activity_name].push(id);
-        } else {
-            ungrouped.push(id);
-        }
-    });
-
-    let html = '';
-
-    // Render activity groups
-    Object.keys(grouped).forEach(actName => {
-        const groupIds = grouped[actName];
-        const allEnabled = groupIds.every(id => selectedServices[id].enabled);
-        const someEnabled = groupIds.some(id => selectedServices[id].enabled);
-        const actEnabled = groupIds.every(id => selectedServices[id].activity_enabled !== false);
-
-        html += `<div class="bg-white rounded-2xl shadow-sm border ${actEnabled && someEnabled ? 'border-cyan-200' : 'border-gray-200'} overflow-hidden">`;
-        html += `<div class="px-5 py-3 bg-gradient-to-r from-cyan-50 to-white border-b border-gray-100 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <label class="inline-flex items-center space-x-2 cursor-pointer">
-                    <span class="w-10 h-5 rounded-full relative transition ${actEnabled ? 'bg-cyan-500' : 'bg-gray-300'}" onclick="event.stopPropagation();toggleActivity('${actName}')">
-                        <span class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition ${actEnabled ? 'translate-x-5' : ''}"></span>
-                    </span>
-                    <span class="text-sm font-semibold ${actEnabled ? 'text-gray-900' : 'text-gray-400'}">${actName}</span>
-                </label>
-                <span class="text-xs text-gray-400">${groupIds.filter(id => selectedServices[id].enabled).length}/${groupIds.length}</span>
-            </div>
-        </div>`;
-
-        groupIds.forEach(id => {
-            const s = selectedServices[id];
-            html += renderServiceCard(id, s);
-        });
-        html += `</div>`;
-    });
-
-    // Ungrouped services
-    ungrouped.forEach(id => {
-        html += renderServiceCard(id, selectedServices[id]);
+        html += renderServiceCard(id, s);
     });
 
     container.innerHTML = html;
@@ -246,46 +216,59 @@ function renderServicesList() {
 }
 
 function renderServiceCard(id, s) {
+    const excluded = excludedActivities[id] || [];
     const activitiesHtml = s.activities && s.activities.length
-        ? `<div class="flex flex-wrap gap-1 mt-2 pt-2 border-t border-gray-100">
-            ${s.activities.map(a => `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-xs font-medium bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                <span>${a.name}</span></span>`).join('')}
+        ? `<div class="flex flex-wrap gap-2 mt-2 pt-2 border-t border-gray-100">
+            ${s.activities.map(a => {
+                const isExcluded = excluded.includes(a.id);
+                const isEssential = a.essential;
+                return `<label class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border cursor-pointer transition-all duration-150
+                    ${isExcluded ? 'bg-gray-50 border-gray-200' : 'bg-cyan-50 border-cyan-200'}
+                    ${isEssential ? 'opacity-60 cursor-not-allowed' : 'hover:bg-cyan-100'}"
+                    title="${isEssential ? 'Actividad esencial no puede desactivarse' : (isExcluded ? 'Habilitar actividad' : 'Deshabilitar actividad')}">
+                    <input type="checkbox" ${isEssential ? 'disabled checked' : (isExcluded ? '' : 'checked')}
+                        onchange="toggleActivity(${id}, ${a.id})"
+                        class="w-3.5 h-3.5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500 cursor-pointer ${isEssential ? 'opacity-50' : ''}">
+                    <span class="text-xs ${isExcluded ? 'text-gray-400' : 'text-cyan-800 font-medium'}">${a.name}</span>
+                    ${isEssential ? '<svg class="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>' : ''}
+                </label>`;
+            }).join('')}
         </div>`
-        : `<p class="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-100 italic">Sin actividad</p>`;
+        : `<p class="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-100 italic">${'{{ __('ui.quotations.no_activities_label') }}'}</p>`;
 
     return `
-    <div class="px-5 py-4 ${!s.activity_name ? 'bg-white rounded-2xl shadow-sm border border-gray-200' : 'border-b border-gray-50 last:border-b-0'}">
-        <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center space-x-3">
-                <label class="inline-flex items-center space-x-2 cursor-pointer">
-                    <span class="w-10 h-5 rounded-full relative transition ${s.enabled ? 'bg-indigo-600' : 'bg-gray-300'}" onclick="toggleService(${id})">
-                        <span class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition ${s.enabled ? 'translate-x-5' : ''}"></span>
-                    </span>
-                    <span class="text-sm font-medium ${s.enabled ? 'text-gray-900' : 'text-gray-400'}">${s.name}</span>
-                </label>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-5 py-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-3">
+                    <label class="inline-flex items-center space-x-2 cursor-pointer">
+                        <span class="w-10 h-5 rounded-full relative transition ${s.enabled ? 'bg-indigo-600' : 'bg-gray-300'}" onclick="toggleService(${id})">
+                            <span class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition ${s.enabled ? 'translate-x-5' : ''}"></span>
+                        </span>
+                        <span class="text-sm font-medium ${s.enabled ? 'text-gray-900' : 'text-gray-400'}">${s.name}</span>
+                    </label>
+                </div>
+                <button type="button" onclick="removeService(${id})" class="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
-            <button type="button" onclick="removeService(${id})" class="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
+            ${!s.enabled ? '<p class="text-xs text-gray-400 mb-2">Servicio excluido</p>' : ''}
+            <div class="flex items-center space-x-3 mt-2 ${!s.enabled ? 'opacity-40 pointer-events-none' : ''}">
+                <div class="w-40"><label class="block text-xs text-gray-500 mb-1">Precio Unitario</label>
+                    <input type="number" step="0.01" value="${s.unit_price}" onchange="updatePrice(${id}, this.value)"
+                        class="form-input no-spinner block w-full rounded-lg border-gray-300 text-sm"></div>
+            </div>
+            ${s.enabled ? activitiesHtml : ''}
         </div>
-        ${!s.enabled ? '<p class="text-xs text-gray-400 mb-2">Servicio excluido</p>' : ''}
-        <div class="grid grid-cols-2 gap-3 ${!s.enabled ? 'opacity-40 pointer-events-none' : ''}">
-            <div><label class="block text-xs text-gray-500 mb-1">Cantidad</label>
-                <input type="number" min="1" value="${s.quantity}" onchange="updateQuantity(${id}, this.value)"
-                    class="form-input no-spinner block w-full rounded-lg border-gray-300 text-sm"></div>
-            <div><label class="block text-xs text-gray-500 mb-1">Precio Unitario</label>
-                <input type="number" step="0.01" value="${s.unit_price}" onchange="updatePrice(${id}, this.value)"
-                    class="form-input no-spinner block w-full rounded-lg border-gray-300 text-sm"></div>
-        </div>
-        ${activitiesHtml}
     </div>`;
 }
 
 function syncHiddenInput() {
     document.getElementById('selected-items-input').value = JSON.stringify(
         Object.values(selectedServices).filter(s => s.enabled).map(s => ({
-            microservice_id: s.id, quantity: s.quantity, unit_price: s.unit_price
+            microservice_id: s.id,
+            unit_price: s.unit_price,
+            excluded_activities: excludedActivities[s.id] || []
         }))
     );
 }

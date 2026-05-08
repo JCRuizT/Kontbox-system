@@ -18,16 +18,25 @@ class RolePermissionSeeder extends Seeder
     {
         $permissions = [
             'admin.access',
+            // Microservicios
             'microservices.create', 'microservices.read', 'microservices.update', 'microservices.deactivate',
+            // Planes
             'plans.create', 'plans.read', 'plans.update', 'plans.deactivate',
-            'activities.create', 'activities.read', 'activities.update',
+            // Actividades
+            'activities.create', 'activities.read', 'activities.update', 'activities.deactivate', 'activities.essential',
+            // Prospectos
             'prospects.create', 'prospects.read', 'prospects.update',
+            // Cotizaciones
             'quotations.create', 'quotations.read', 'quotations.update_own',
             'quotations.send_for_approval', 'quotations.approve', 'quotations.reject',
+            // Contratos
             'contracts.create', 'contracts.read', 'contracts.upload_document',
             'contracts.activate', 'contracts.anulate',
+            // Anexos
             'amendments.create', 'amendments.read',
+            // Facturas
             'invoices.create', 'invoices.read',
+            // Auditoría
             'audit.read',
         ];
 

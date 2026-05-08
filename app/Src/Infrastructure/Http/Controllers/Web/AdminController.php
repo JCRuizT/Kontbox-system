@@ -153,6 +153,50 @@ class AdminController extends Controller
     }
 
     /**
+     * Muestra el formulario para crear un nuevo rol.
+     */
+    public function rolesCreate(): View
+    {
+        $grouped = [];
+        foreach (Permission::all() as $perm) {
+            $parts = explode('.', $perm->name);
+            $module = $parts[0] ?? 'general';
+            $action = $parts[1] ?? $perm->name;
+            if (!isset($grouped[$module])) $grouped[$module] = [];
+            $grouped[$module][] = ['name' => $perm->name, 'action' => $action];
+        }
+
+        return view('admin.roles.edit', [
+            'role' => null,
+            'groupedPermissions' => $grouped,
+            'rolePermissions' => [],
+        ]);
+    }
+
+    /**
+     * Almacena un nuevo rol con sus permisos.
+     */
+    public function rolesStore(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:roles,name',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'exists:permissions,name',
+        ]);
+
+        $role = Role::create(['name' => $validated['name']]);
+        $role->syncPermissions($validated['permissions'] ?? []);
+
+        AuditService::log("Creó el rol {$role->name}", $role, [
+            'action' => 'role_create',
+            'role' => $role->name,
+            'permissions_count' => count($validated['permissions'] ?? []),
+        ]);
+
+        return to_route('admin.roles')->with('success', __('domain.admin.role_created', ['name' => $role->name]));
+    }
+
+    /**
      * Muestra el formulario de edición con permisos agrupados por módulo.
      */
     public function rolesEdit(Role $role): View
@@ -193,6 +237,27 @@ class AdminController extends Controller
         ]);
 
         return to_route('admin.roles')->with('success', __('domain.admin.role_permissions_updated', ['name' => $role->name]));
+    }
+
+    /**
+     * Renombra un rol desde el listado general.
+     */
+    public function rolesRename(Request $request, Role $role): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
+        ]);
+
+        $oldName = $role->name;
+        $role->update(['name' => $validated['name']]);
+
+        AuditService::log("Renombró rol {$oldName} → {$validated['name']}", $role, [
+            'action' => 'role_rename',
+            'old_name' => $oldName,
+            'new_name' => $validated['name'],
+        ]);
+
+        return to_route('admin.roles')->with('success', __('domain.admin.role_renamed', ['old' => $oldName, 'new' => $validated['name']]));
     }
 
     //
