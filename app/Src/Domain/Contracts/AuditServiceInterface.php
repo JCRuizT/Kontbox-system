@@ -1,13 +1,12 @@
 <?php
-
 namespace App\Src\Domain\Contracts;
 
 interface AuditServiceInterface
 {
-    public const APP = 'app';
-    public const CRUD = 'crud';
+    public const APP      = 'app';
+    public const CRUD     = 'crud';
     public const BUSINESS = 'business';
-    public const ERROR = 'error';
+    public const ERROR    = 'error';
 
     public function log(string $description, $subject = null, array $properties = [], string $logName = 'app'): void;
     public function logCreate($subject, string $entityName, array $data = []): void;

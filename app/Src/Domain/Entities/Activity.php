@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Src\Domain\Entities;
 
 class Activity
@@ -16,68 +15,65 @@ class Activity
      * Retorna el identificador interno de la actividad.
      */
 
-
     public function id(): ?int
-{
-    return $this->id;
-}
+    {
+        return $this->id;
+    }
     /**
      * Retorna el ID del microservicio padre.
      */
 
     public function microserviceId(): int
-{
-    return $this->microserviceId;
-}
+    {
+        return $this->microserviceId;
+    }
     /**
      * Retorna el nombre de la actividad.
      */
 
     public function name(): string
-{
-    return $this->name;
-}
+    {
+        return $this->name;
+    }
     /**
      * Retorna la descripci\u00f3n de la actividad, o null si no tiene.
      */
 
     public function description(): ?string
-{
-    return $this->description;
-}
+    {
+        return $this->description;
+    }
     /**
      * Retorna si la actividad est\u00e1 activa.
      */
 
     public function isActive(): bool
-{
-    return $this->isActive;
-}
+    {
+        return $this->isActive;
+    }
     /**
      * Retorna si la actividad es esencial (no puede desactivarse).
      */
 
     public function isEssential(): bool
-{
-    return $this->isEssential;
-}
+    {
+        return $this->isEssential;
+    }
     /**
      * Verifica si la actividad puede ser desactivada (no es esencial).
      */
 
-
     public function canBeDeactivated(): bool
     {
-        return !$this->isEssential;
+        return ! $this->isEssential;
     }
     /**
      * Desactiva la actividad. Lanza DomainException si es esencial.
      */
 
-
     public function deactivate(): void
     {
-        if (!$this->canBeDeactivated()) {
+        if (! $this->canBeDeactivated()) {
             throw new \DomainException('domain.activity.essential_cannot_deactivate');
         }
         $this->isActive = false;
@@ -85,7 +81,6 @@ class Activity
     /**
      * Reactiva la actividad previamente desactivada.
      */
-
 
     public function activate(): void
     {

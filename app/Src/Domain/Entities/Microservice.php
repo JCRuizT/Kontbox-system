@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Src\Domain\Entities;
 
 class Microservice
@@ -16,55 +15,53 @@ class Microservice
      * Retorna el identificador interno del microservicio.
      */
 
-
     public function id(): ?int
-{
-    return $this->id;
-}
+    {
+        return $this->id;
+    }
     /**
      * Retorna el nombre del microservicio.
      */
 
     public function name(): string
-{
-    return $this->name;
-}
+    {
+        return $this->name;
+    }
     /**
      * Retorna la descripci\u00f3n del microservicio, o null si no tiene.
      */
 
     public function description(): ?string
-{
-    return $this->description;
-}
+    {
+        return $this->description;
+    }
     /**
      * Retorna el costo base del microservicio.
      */
 
     public function baseCost(): float
-{
-    return $this->baseCost;
-}
+    {
+        return $this->baseCost;
+    }
     /**
      * Retorna el tipo del microservicio (recurring/one_time).
      */
 
     public function type(): string
-{
-    return $this->type;
-}
+    {
+        return $this->type;
+    }
     /**
      * Retorna si el microservicio est\u00e1 activo.
      */
 
     public function isActive(): bool
-{
-    return $this->isActive;
-}
+    {
+        return $this->isActive;
+    }
     /**
      * Desactiva el microservicio (baja l\u00f3gica).
      */
-
 
     public function deactivate(): void
     {
@@ -73,7 +70,6 @@ class Microservice
     /**
      * Reactiva el microservicio previamente desactivado.
      */
-
 
     public function activate(): void
     {

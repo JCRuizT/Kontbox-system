@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Src\Domain\Entities;
 
 class Plan
@@ -18,63 +17,61 @@ class Plan
      * Retorna el identificador interno del plan.
      */
 
-
     public function id(): ?int
-{
-    return $this->id;
-}
+    {
+        return $this->id;
+    }
     /**
      * Retorna el nombre del plan.
      */
 
     public function name(): string
-{
-    return $this->name;
-}
+    {
+        return $this->name;
+    }
     /**
      * Retorna la descripci\u00f3n del plan, o null si no tiene.
      */
 
     public function description(): ?string
-{
-    return $this->description;
-}
+    {
+        return $this->description;
+    }
     /**
      * Retorna si el plan est\u00e1 activo.
      */
 
     public function isActive(): bool
-{
-    return $this->isActive;
-}
+    {
+        return $this->isActive;
+    }
     /**
      * Retorna la colecci\u00f3n de servicios del plan.
      */
 
     public function services(): array
-{
-    return $this->services;
-}
+    {
+        return $this->services;
+    }
     /**
      * Retorna si el plan es personalizado para un cliente.
      */
 
     public function isCustom(): bool
-{
-    return $this->isCustom;
-}
+    {
+        return $this->isCustom;
+    }
     /**
      * Retorna el ID del plan original si es personalizado, o null.
      */
 
     public function parentPlanId(): ?int
-{
-    return $this->parentPlanId;
-}
+    {
+        return $this->parentPlanId;
+    }
     /**
      * Desactiva el plan (baja l\u00f3gica).
      */
-
 
     public function deactivate(): void
     {
@@ -83,7 +80,6 @@ class Plan
     /**
      * Reactiva el plan previamente desactivado.
      */
-
 
     public function activate(): void
     {

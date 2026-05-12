@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Src\Domain\Entities;
 
 use App\Src\Domain\Enums\ContractStatus;
@@ -35,55 +34,55 @@ class Contract
         private int $approvedBy,
         private ContractStatus $status,
         private ?SignedPdf $signedPdf = null,
-        private ?\DateTimeInterface $startDate = null,
-        private ?\DateTimeInterface $endDate = null,
+        private  ? \DateTimeInterface $startDate = null,
+        private  ? \DateTimeInterface $endDate = null,
         private float $totalAmount = 0,
-        private ?\DateTimeInterface $activatedAt = null,
-        private ?\DateTimeInterface $cancelledAt = null,
+        private  ? \DateTimeInterface $activatedAt = null,
+        private  ? \DateTimeInterface $cancelledAt = null,
         private ?string $cancellationReason = null,
     ) {}
 
     /** Retorna el identificador interno de la base de datos. Null si aún no se ha persistido. */
     public function id(): ?int
-{
-    return $this->id;
-}
+    {
+        return $this->id;
+    }
 
     /** Retorna el número de contrato único legible. */
-    public function contractNumber(): string
-{
-    return $this->contractNumber;
-}
+    public function contractNumber() : string
+    {
+        return $this->contractNumber;
+    }
 
     /** Retorna el ID de la cotización de origen que generó este contrato. */
-    public function quotationId(): int
-{
-    return $this->quotationId;
-}
+    public function quotationId() : int
+    {
+        return $this->quotationId;
+    }
 
     /** Retorna el ID del usuario que aprobó el contrato. */
-    public function approvedBy(): int
-{
-    return $this->approvedBy;
-}
+    public function approvedBy() : int
+    {
+        return $this->approvedBy;
+    }
 
     /** Retorna el estado actual de la máquina de estados del contrato. */
     public function status(): ContractStatus
-{
-    return $this->status;
-}
+    {
+        return $this->status;
+    }
 
     /** Retorna el documento PDF firmado, o null si aún no se ha cargado. */
     public function signedPdf(): ?SignedPdf
-{
-    return $this->signedPdf;
-}
+    {
+        return $this->signedPdf;
+    }
 
     /** Retorna el monto monetario total del contrato. */
     public function totalAmount(): float
-{
-    return $this->totalAmount;
-}
+    {
+        return $this->totalAmount;
+    }
 
     /**
      * Carga un documento PDF firmado al contrato.
@@ -98,13 +97,13 @@ class Contract
     /** @throws \DomainException */
     public function uploadDocument(SignedPdf $pdf): void
     {
-        if (!$this->status->canUploadDocument()) {
+        if (! $this->status->canUploadDocument()) {
             throw new \DomainException(
                 'domain.contract.pending_document_status_required'
             );
         }
         $this->signedPdf = $pdf;
-        $this->status = ContractStatus::DOCUMENT_LOADED;
+        $this->status    = ContractStatus::DOCUMENT_LOADED;
     }
 
     /**
@@ -120,7 +119,7 @@ class Contract
     /** @throws \DomainException */
     public function activate(): void
     {
-        if (!$this->status->canActivate()) {
+        if (! $this->status->canActivate()) {
             throw new \DomainException(
                 'domain.contract.cannot_activate_without_pdf'
             );
@@ -130,9 +129,9 @@ class Contract
                 'domain.contract.cannot_activate_without_pdf'
             );
         }
-        $this->status = ContractStatus::ACTIVE;
+        $this->status      = ContractStatus::ACTIVE;
         $this->activatedAt = new \DateTimeImmutable();
-        $this->startDate = new \DateTimeImmutable();
+        $this->startDate   = new \DateTimeImmutable();
     }
 
     /**
@@ -148,13 +147,13 @@ class Contract
     /** @throws \DomainException */
     public function anulate(string $reason): void
     {
-        if (!$this->status->canAnulate()) {
+        if (! $this->status->canAnulate()) {
             throw new \DomainException(
                 'domain.contract.only_active_can_be_cancelled'
             );
         }
-        $this->status = ContractStatus::CANCELLED;
-        $this->cancelledAt = new \DateTimeImmutable();
+        $this->status             = ContractStatus::CANCELLED;
+        $this->cancelledAt        = new \DateTimeImmutable();
         $this->cancellationReason = $reason;
     }
 }
