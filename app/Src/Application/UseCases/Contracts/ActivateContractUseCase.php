@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Src\Application\UseCases\Contracts;
 
 use App\Src\Domain\Entities\Contract;
@@ -21,12 +20,11 @@ class ActivateContractUseCase
      * Activa un contrato con bloqueo de seguridad PDF. Dispara el evento ContractActivated.
      */
 
-
     public function execute(int $contractId): Contract
     {
         $contract = $this->contractRepository->findById($contractId);
 
-        if (!$contract) {
+        if (! $contract) {
             throw new ContractNotFoundException($contractId);
         }
 

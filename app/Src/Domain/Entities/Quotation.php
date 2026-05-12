@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Src\Domain\Entities;
 
 use App\Src\Domain\Enums\QuotationStatus;
@@ -40,7 +39,7 @@ class Quotation
         private Money $subtotal,
         private Money $tax,
         private Money $total,
-        private ?\DateTimeInterface $validUntil,
+        private  ? \DateTimeInterface $validUntil,
         private int $version = 1,
         private ?int $parentId = null,
         private ?string $rejectionReason = null,
@@ -49,33 +48,33 @@ class Quotation
 
     /** Retorna el identificador interno de la base de datos. Null si aún no se ha persistido. */
     public function id(): ?int
-{
-    return $this->id;
-}
+    {
+        return $this->id;
+    }
 
     /** Retorna el número de cotización único legible. */
     public function quoteNumber(): string
-{
-    return $this->quoteNumber;
-}
+    {
+        return $this->quoteNumber;
+    }
 
     /** Retorna el estado actual de la máquina de estados de la cotización. */
     public function status(): QuotationStatus
-{
-    return $this->status;
-}
+    {
+        return $this->status;
+    }
 
     /** Retorna el número de versión usado para inmutabilidad y registro de auditoría. */
     public function version(): int
-{
-    return $this->version;
-}
+    {
+        return $this->version;
+    }
 
     /** Retorna la colección de items de línea asociados a esta cotización. */
     public function items(): array
-{
-    return $this->items;
-}
+    {
+        return $this->items;
+    }
 
     /**
      * Envía la cotización al flujo de aprobación.
@@ -89,7 +88,7 @@ class Quotation
     /** @throws \DomainException */
     public function sendForApproval(): void
     {
-        if (!$this->status->canBeSentForApproval()) {
+        if (! $this->status->canBeSentForApproval()) {
             throw new \DomainException(
                 'domain.quotation.immutable'
             );
@@ -108,7 +107,7 @@ class Quotation
     /** @throws \DomainException */
     public function approve(): void
     {
-        if (!$this->status->canBeApproved()) {
+        if (! $this->status->canBeApproved()) {
             throw new \DomainException('domain.quotation.must_be_under_review_to_approve');
         }
         $this->status = QuotationStatus::APPROVED;
@@ -117,10 +116,10 @@ class Quotation
     /** @throws \DomainException */
     public function reject(string $reason): void
     {
-        if (!$this->status->canBeRejected()) {
+        if (! $this->status->canBeRejected()) {
             throw new \DomainException('domain.quotation.must_be_under_review_to_reject');
         }
-        $this->status = QuotationStatus::REJECTED;
+        $this->status          = QuotationStatus::REJECTED;
         $this->rejectionReason = $reason;
     }
 

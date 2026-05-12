@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Src\Application\Services;
 
 use App\Src\Domain\Contracts\AuditServiceInterface;
@@ -17,16 +16,21 @@ class ActivityInstanceService
      * Crea las instancias de actividad para un contrato activado. Recorre los servicios del contrato y sus actividades.
      */
 
-
     public function createForContract(Contract $contract): int
     {
         $contract->loadMissing('services.microservice.activities');
         $created = 0;
 
         foreach ($contract->services as $service) {
-            if (!$service->microservice) continue;
+            if (! $service->microservice) {
+                continue;
+            }
+
             foreach ($service->microservice->activities as $activity) {
-                if (!$activity->is_active) continue;
+                if (! $activity->is_active) {
+                    continue;
+                }
+
                 $contract->activityInstances()->firstOrCreate(
                     ['activity_id' => $activity->id],
                     ['is_enabled' => true, 'status' => 'pending']

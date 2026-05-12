@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Src\Domain\ValueObjects;
 
 /**
@@ -20,25 +19,24 @@ class SignedPdf
      * Retorna la ruta de almacenamiento del PDF.
      */
 
-
     public function path(): string
-{
-    return $this->path;
-}
+    {
+        return $this->path;
+    }
     /**
      * Retorna el nombre original del archivo subido.
      */
 
     public function originalName(): string
-{
-    return $this->originalName;
-}
+    {
+        return $this->originalName;
+    }
     /**
      * Retorna el tama\u00f1o del archivo en bytes.
      */
 
     public function sizeInBytes(): int
-{
-    return $this->sizeInBytes;
-}
+    {
+        return $this->sizeInBytes;
+    }
 }

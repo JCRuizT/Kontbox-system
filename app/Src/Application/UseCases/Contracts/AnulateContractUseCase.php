@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Src\Application\UseCases\Contracts;
 
 use App\Src\Domain\Contracts\AuditServiceInterface;
@@ -20,12 +19,11 @@ class AnulateContractUseCase
      * Anula un contrato activo con un motivo obligatorio. Registra la anulaci\u00f3n en auditor\u00eda.
      */
 
-
     public function execute(int $contractId, string $reason): Contract
     {
         $contract = $this->contractRepository->findById($contractId);
 
-        if (!$contract) {
+        if (! $contract) {
             throw new \App\Src\Domain\Exceptions\ContractNotFoundException($contractId);
         }
 

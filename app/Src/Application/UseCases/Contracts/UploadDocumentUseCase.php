@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Src\Application\UseCases\Contracts;
 
 use App\Src\Domain\Contracts\AuditServiceInterface;
@@ -20,12 +19,11 @@ class UploadDocumentUseCase
      * Carga un PDF firmado al contrato. Valida el estado del contrato y registra la auditor\u00eda.
      */
 
-
     public function execute(int $contractId, string $path, string $originalName, int $size): Contract
     {
         $contract = $this->contractRepository->findById($contractId);
 
-        if (!$contract) {
+        if (! $contract) {
             throw new \App\Src\Domain\Exceptions\ContractNotFoundException($contractId);
         }
 
