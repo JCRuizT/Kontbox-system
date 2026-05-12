@@ -3,10 +3,10 @@
 namespace App\Src\Infrastructure\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Src\Domain\Contracts\AuditServiceInterface;
+use App\Src\Domain\Entities\Microservice as MicroserviceEntity;
+use App\Src\Domain\Repositories\MicroserviceRepositoryInterface;
 use App\Src\Domain\Services\AuditService;
-use App\Src\Infrastructure\Persistence\Models\Activity;
-use App\Src\Infrastructure\Persistence\Models\Microservice;
-use App\Src\Infrastructure\Persistence\Models\Plan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -18,26 +18,22 @@ use Illuminate\View\View;
  */
 class MicroserviceController extends Controller
 {
-    /**
-     * Lista paginada de todos los microservicios.
-     */
+    public function __construct(
+        private MicroserviceRepositoryInterface $microserviceRepository,
+        private AuditServiceInterface $auditService,
+    ) {}
+
     public function index(): View
     {
-        $microservices = Microservice::paginate(config('kontbox.items_per_page'));
+        $microservices = \App\Src\Infrastructure\Persistence\Models\Microservice::paginate(config('kontbox.items_per_page'));
         return view('microservices.index', compact('microservices'));
     }
 
-    /**
-     * Muestra el formulario para crear un nuevo microservicio.
-     */
     public function create(): View
     {
         return view('microservices.form');
     }
 
-    /**
-     * Almacena un nuevo microservicio y registra la auditoría de creación.
-     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -47,26 +43,29 @@ class MicroserviceController extends Controller
             'type' => 'required|in:recurring,one_time',
         ]);
 
-        $ms = Microservice::create($validated);
+        $entity = new MicroserviceEntity(
+            id: null,
+            name: $validated['name'],
+            description: $validated['description'] ?? null,
+            baseCost: $validated['base_cost'],
+            type: $validated['type'],
+            isActive: true,
+        );
 
-        AuditService::logCreate($ms, 'Microservicio', $validated);
+        $this->microserviceRepository->save($entity);
+
+        $this->auditService->logCreate($entity, 'Microservicio', $validated);
 
         return to_route('microservices.index')
             ->with('success', __('domain.microservice.created'));
     }
 
-    /**
-     * Muestra el formulario para editar un microservicio existente.
-     */
-    public function edit(Microservice $microservice): View
+    public function edit(\App\Src\Infrastructure\Persistence\Models\Microservice $microservice): View
     {
         return view('microservices.form', compact('microservice'));
     }
 
-    /**
-     * Actualiza un microservicio y registra los cambios en auditoría.
-     */
-    public function update(Request $request, Microservice $microservice): RedirectResponse
+    public function update(Request $request, \App\Src\Infrastructure\Persistence\Models\Microservice $microservice): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -75,39 +74,31 @@ class MicroserviceController extends Controller
             'type' => 'required|in:recurring,one_time',
         ]);
 
+        $entity = $this->microserviceRepository->findById($microservice->id);
+        if (!$entity) {
+            return back()->with('error', __('domain.microservice.not_found'));
+        }
+
         $original = $microservice->getOriginal();
         $microservice->update($validated);
-        $changes = $microservice->getChanges();
-        AuditService::logUpdate($microservice, 'Microservicio', $original, $changes);
+        AuditService::logUpdate($microservice, 'Microservicio', $original, $microservice->getChanges());
 
         return to_route('microservices.index')
             ->with('success', __('domain.microservice.updated'));
     }
 
-    /**
-     * Desactiva un microservicio (baja lógica) y registra auditoría.
-     * No elimina físicamente el registro para mantener integridad referencial.
-     * Un microservicio desactivado no aparece en nuevos planes ni actividades,
-     * pero no afecta contratos o cotizaciones existentes (usan snapshots).
-     */
-    public function destroy(Microservice $microservice): RedirectResponse
+    public function destroy(\App\Src\Infrastructure\Persistence\Models\Microservice $microservice): RedirectResponse
     {
         $microservice->update(['is_active' => false]);
-
         AuditService::logDelete($microservice, 'Microservicio');
 
         return to_route('microservices.index')
             ->with('success', __('domain.microservice.deactivated'));
     }
 
-    /**
-     * Reactiva un microservicio previamente desactivado.
-     * Vuelve a estar disponible para nuevas asignaciones en planes y actividades.
-     */
-    public function activate(Microservice $microservice): RedirectResponse
+    public function activate(\App\Src\Infrastructure\Persistence\Models\Microservice $microservice): RedirectResponse
     {
         $microservice->update(['is_active' => true]);
-
         AuditService::log('Reactivated microservice', $microservice, ['action' => 'activate', 'microservice_id' => $microservice->id], AuditService::CRUD);
 
         return to_route('microservices.index')

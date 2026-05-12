@@ -3,31 +3,41 @@
 namespace App\Src\Application\UseCases\Quotations;
 
 use App\Src\Domain\Entities\Quotation;
+use App\Src\Domain\Events\QuotationApproved;
+use App\Src\Domain\Exceptions\QuotationNotFoundException;
 use App\Src\Domain\Repositories\QuotationRepositoryInterface;
+use Illuminate\Contracts\Events\Dispatcher;
 
 /**
- * Caso de uso: aprobar cotización. Solo la gerencia comercial puede ejecutarlo.
+ * Caso de uso: ApproveQuotationUseCase.
  */
 class ApproveQuotationUseCase
 {
     public function __construct(
         private QuotationRepositoryInterface $quotationRepository,
+        private Dispatcher $events,
     ) {}
-
     /**
-     * @throws \DomainException
+     * Aprueba una cotizaci\u00f3n. Solo la gerencia comercial puede ejecutarlo. Dispara el evento QuotationApproved.
      */
+
+
     public function execute(int $quotationId): Quotation
     {
         $quotation = $this->quotationRepository->findById($quotationId);
 
         if (!$quotation) {
-            throw new \RuntimeException(__('domain.quotation.not_found'));
+            throw new QuotationNotFoundException($quotationId);
         }
 
         $quotation->approve();
 
         $this->quotationRepository->save($quotation);
+
+        $this->events->dispatch(new QuotationApproved(
+            quotationId: $quotationId,
+            quoteNumber: $quotation->quoteNumber(),
+        ));
 
         return $quotation;
     }

@@ -3,6 +3,9 @@
 namespace App\Src\Infrastructure\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Src\Domain\Contracts\AuditServiceInterface;
+use App\Src\Domain\Entities\Activity as ActivityEntity;
+use App\Src\Domain\Repositories\ActivityRepositoryInterface;
 use App\Src\Domain\Services\AuditService;
 use App\Src\Infrastructure\Persistence\Models\Activity;
 use App\Src\Infrastructure\Persistence\Models\ActivityInstance;
@@ -13,6 +16,11 @@ use Illuminate\View\View;
 
 class ActivityController extends Controller
 {
+    public function __construct(
+        private ActivityRepositoryInterface $activityRepository,
+        private AuditServiceInterface $auditService,
+    ) {}
+
     public function index(): View
     {
         $microservices = Microservice::with(['activities' => function ($q) {
@@ -38,10 +46,17 @@ class ActivityController extends Controller
             'is_essential' => 'nullable|boolean',
         ]);
 
-        $validated['is_essential'] = $request->boolean('is_essential');
+        $entity = new ActivityEntity(
+            id: null,
+            microserviceId: $validated['microservice_id'],
+            name: $validated['name'],
+            description: $validated['description'] ?? null,
+            isActive: true,
+            isEssential: $request->boolean('is_essential'),
+        );
 
-        $activity = Activity::create($validated);
-        AuditService::logCreate($activity, 'Actividad', $validated);
+        $this->activityRepository->save($entity);
+        $this->auditService->logCreate($entity, 'Actividad', $validated);
 
         return to_route('activities.index')
             ->with('success', __('domain.activity.created'));

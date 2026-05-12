@@ -3,13 +3,15 @@
 namespace App\Src\Infrastructure\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Src\Domain\Contracts\AuditServiceInterface;
+use App\Src\Domain\Entities\ContractAmendment as AmendmentEntity;
 use App\Src\Domain\Enums\ContractStatus;
+use App\Src\Domain\Repositories\AmendmentRepositoryInterface;
 use App\Src\Infrastructure\Persistence\Models\Contract;
 use App\Src\Infrastructure\Persistence\Models\ContractAmendment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use App\Src\Domain\Services\AuditService;
 
 /**
  * Controlador para la gestión de anexos/adiciones (modificaciones) a contratos activos.
@@ -18,9 +20,11 @@ use App\Src\Domain\Services\AuditService;
  */
 class AmendmentController extends Controller
 {
-    /**
-     * Lista paginada de anexos con su contrato, prospecto y creador.
-     */
+    public function __construct(
+        private AmendmentRepositoryInterface $amendmentRepository,
+        private AuditServiceInterface $auditService,
+    ) {}
+
     public function index(): View
     {
         $amendments = ContractAmendment::with(['contract.quotation.prospect', 'createdBy'])
@@ -111,16 +115,18 @@ class AmendmentController extends Controller
             }
         }
 
-        $amendment = ContractAmendment::create([
-            'contract_id' => $contract->id,
-            'amendment_number' => 'OTR-' . now()->format('Ymd') . '-' . random_int(1000, 9999),
-            'description' => $validated['description'],
-            'signed_pdf_path' => $pdfPath,
-            'modified_services' => $validated['modified_services'] ?? null,
-            'created_by' => auth()->id(),
-        ]);
+        $entity = new AmendmentEntity(
+            id: null,
+            contractId: $contract->id,
+            amendmentNumber: 'OTR-' . now()->format('Ymd') . '-' . random_int(1000, 9999),
+            description: $validated['description'],
+            signedPdfPath: $pdfPath,
+            modifiedServices: $validated['modified_services'] ? json_decode($validated['modified_services'], true) : null,
+            createdBy: auth()->id(),
+        );
 
-        AuditService::logCreate($amendment, 'Anexo', $validated);
+        $this->amendmentRepository->save($entity);
+        $this->auditService->logCreate($entity, 'Anexo', $validated);
 
         return to_route('contracts.show', $contract)
             ->with('success', __('domain.amendment.created'));

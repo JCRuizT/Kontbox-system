@@ -70,14 +70,14 @@ class SearchController extends Controller
                 $b->where('name', 'like', "%{$query}%")
                   ->orWhere('description', 'like', "%{$query}%");
             }))
-            ->with('activity')
+            ->with('activities')
             ->orderBy('name')
             ->limit($this->limit($request))
             ->get()
             ->map(fn ($m) => [
                 'id' => $m->id,
                 'name' => $m->name,
-                'subtext' => $m->activity ? $m->activity->name : null,
+                'subtext' => $m->activities->first()?->name ?? null,
                 'base_cost' => $m->base_cost,
             ])
             ->toArray();

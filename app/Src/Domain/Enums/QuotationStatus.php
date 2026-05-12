@@ -5,8 +5,8 @@ namespace App\Src\Domain\Enums;
 /**
  * Defines the possible states of a quotation through its lifecycle.
  *
- * Each case represents a stage in the quotation's state machine.
- * Transitions are validated via permission methods below.
+ * Cada caso representa una etapa en la máquina de estados de la cotización.
+ * Las transiciones se validan mediante los métodos de permiso a continuación.
  */
 enum QuotationStatus: string
 {
@@ -23,8 +23,8 @@ enum QuotationStatus: string
     case REJECTED = 'rejected';
 
     /**
-     * Returns the human-readable label for the current status.
-     * Uses Laravel's __() helper for i18n support.
+     * Retorna la etiqueta legible para el estado actual.
+     * Usa el helper __() de Laravel para soporte i18n.
      */
     public function label(): string
     {
@@ -32,7 +32,7 @@ enum QuotationStatus: string
     }
 
     /**
-     * Determines whether the quotation can be modified in its current status.
+     * Determina si la cotización puede modificarse en su estado actual.
      *
      * Regla de negocio: solo las cotizaciones en estado borrador (DRAFT) pueden editarse.
      * Una vez enviadas a revisión, son inmutables para garantizar la trazabilidad.
@@ -43,7 +43,7 @@ enum QuotationStatus: string
     }
 
     /**
-     * Checks if the quotation can be sent for approval workflow.
+     * Verifica si la cotización puede enviarse al flujo de aprobación.
      *
      * Regla de negocio: solo se puede enviar a revisión desde el estado borrador.
      * Esto evita reenvíos accidentales de cotizaciones ya procesadas.
@@ -54,7 +54,7 @@ enum QuotationStatus: string
     }
 
     /**
-     * Checks if the quotation can be approved.
+     * Verifica si la cotización puede ser aprobada.
      *
      * Regla de negocio: solo cotizaciones en revisión (UNDER_REVIEW) pueden ser aprobadas.
      * Una cotización en borrador primero debe enviarse a revisión.
@@ -65,7 +65,7 @@ enum QuotationStatus: string
     }
 
     /**
-     * Checks if the quotation can be rejected.
+     * Verifica si la cotización puede ser rechazada.
      *
      * Regla de negocio: solo cotizaciones en revisión (UNDER_REVIEW) pueden ser rechazadas.
      * El rechazo requiere una razón obligatoria proporcionada por el revisor.

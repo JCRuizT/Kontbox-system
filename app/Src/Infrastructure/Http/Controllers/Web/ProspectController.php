@@ -3,39 +3,33 @@
 namespace App\Src\Infrastructure\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Src\Domain\Contracts\AuditServiceInterface;
+use App\Src\Domain\Entities\Prospect as ProspectEntity;
+use App\Src\Domain\Repositories\ProspectRepositoryInterface;
+use App\Src\Domain\Services\AuditService;
 use App\Src\Infrastructure\Persistence\Models\Prospect;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use App\Src\Domain\Services\AuditService;
 
-/**
- * Controlador para la gestión de prospectos (clientes potenciales).
- * Administra la creación, actualización y visualización de prospectos
- * que luego pueden convertirse en cotizaciones y contratos.
- */
 class ProspectController extends Controller
 {
-    /**
-     * Lista paginada de prospectos con su creador.
-     */
+    public function __construct(
+        private ProspectRepositoryInterface $prospectRepository,
+        private AuditServiceInterface $auditService,
+    ) {}
+
     public function index(): View
     {
-        $prospects = Prospect::with('createdBy')->paginate(config('kontbox.items_per_page'));
+        $prospects = Prospect::with('createdBy')->orderByDesc('created_at')->paginate(config('kontbox.items_per_page'));
         return view('prospects.index', compact('prospects'));
     }
 
-    /**
-     * Muestra el formulario para crear un nuevo prospecto.
-     */
     public function create(): View
     {
         return view('prospects.form');
     }
 
-    /**
-     * Almacena un nuevo prospecto asignando el usuario autenticado como creador.
-     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -43,15 +37,23 @@ class ProspectController extends Controller
             'contact_name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:prospects,email',
             'phone' => 'nullable|string|max:50',
+            'status' => 'nullable|string|in:new,contacted,negotiation,won,lost',
             'notes' => 'nullable|string',
         ]);
 
-        $prospect = Prospect::create([
-            ...$validated,
-            'created_by' => auth()->id(),
-        ]);
+        $entity = new ProspectEntity(
+            id: null,
+            companyName: $validated['company_name'],
+            contactName: $validated['contact_name'],
+            email: $validated['email'],
+            phone: $validated['phone'] ?? null,
+            status: $validated['status'] ?? 'new',
+            notes: $validated['notes'] ?? null,
+            createdBy: auth()->id(),
+        );
 
-        AuditService::logCreate($prospect, 'Prospecto', $validated);
+        $this->prospectRepository->save($entity);
+        $this->auditService->logCreate($entity, 'Prospecto', $validated);
 
         return to_route('prospects.index')
             ->with('success', __('domain.prospect.created'));

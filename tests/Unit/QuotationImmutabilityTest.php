@@ -62,7 +62,7 @@ class QuotationImmutabilityTest extends TestCase
         $this->assertFalse($entity->canBeModified());
 
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage(__('domain.quotation.immutable'));
+        $this->expectExceptionMessage('domain.quotation.immutable');
 
         $entity->sendForApproval();
     }

@@ -351,14 +351,20 @@ app/
 ├── Models/                         # User (Eloquent)
 └── Src/
     ├── Domain/
+    │   ├── Contracts/              # AuditServiceInterface
     │   ├── Entities/               # Contract, Quotation (business logic)
     │   ├── Enums/                  # QuotationStatus, ContractStatus, etc.
-    │   ├── Services/               # AuditService
+    │   ├── Events/                 # Domain Events (ContractActivated, QuotationApproved...)
+    │   ├── Exceptions/             # ContractNotFoundException, QuotationNotFoundException
+    │   ├── Repositories/           # ContractRepositoryInterface, QuotationRepositoryInterface
+    │   ├── Services/               # AuditService (facade estática)
     │   └── ValueObjects/           # Money, SignedPdf
     ├── Application/
+    │   ├── Services/               # QuotationPricingService, ActivityInstanceService
     │   └── UseCases/               # ActivateContract, ApproveQuotation, etc.
     └── Infrastructure/
         ├── Http/Controllers/       # Web y API controllers
+        ├── Listeners/              # LogContractActivated, CreateActivityInstances...
         └── Persistence/
             ├── Models/             # Eloquent models
             └── Repositories/       # Implementaciones de repositorios
@@ -440,3 +446,90 @@ User (1) ──── (N) Contract (approved_by)
 | **Snapshot** | Captura del estado de un microservicio al momento de crear una cotización. |
 | **Inmutabilidad** | Propiedad de las cotizaciones en revisión: no pueden modificarse. |
 | **Bloqueo de Seguridad** | Restricción que impide activar un contrato sin PDF firmado. |
+| **Domain Event** | Evento de dominio que notifica cambios de estado (ContractActivated, QuotationApproved). |
+| **Use Case** | Caso de uso orquestador que coordina entidades, repositorios y eventos para una operación. |
+| **Repository** | Interfaz en Domain, implementación en Infrastructure, desacopla persistencia del negocio. |
+
+---
+
+## 12. Plan de Corrección Arquitectónica (SOLID + Hexagonal)
+
+### 12.1 Estado Actual Post-Corrección
+
+| Principio/Violación | Estado |
+|---|---|
+| **SRP** — Lógica de negocio en controllers | ✅ Corregido: `QuotationPricingService`, `ActivityInstanceService` |
+| **DIP** — Domain con dependencias de framework | ✅ Corregido: AuditService en Infrastructure, SignedPdf sin Storage |
+| **DIP** — `__()` en Domain Entities | ✅ Corregido: usa translation keys, controllers traducen |
+| **OCP** — Tax rate hardcodeado en API | ✅ Corregido: usa `config()` |
+| **DRY** — Lógica duplicada Web/API | ✅ Corregido: servicios compartidos |
+| **Auditoría** — En controllers en vez de use cases | ✅ Corregido: 6 use cases con `AuditServiceInterface` |
+| **Excepciones** — Genéricas sin tipo | ✅ Corregido: `ContractNotFoundException`, `QuotationNotFoundException` |
+| **SignedPdf** — Value Object con I/O | ✅ Corregido: ValueObject puro sin dependencias |
+
+### 12.2 Pendientes — Fase 2
+
+#### Fase 2.1: Domain Events (V20)
+
+| Evento | Disparado por | Listeners |
+|---|---|---|
+| `ContractActivated` | `ActivateContractUseCase` | `LogContractActivated`, `CreateActivityInstances` |
+| `QuotationApproved` | `ApproveQuotationUseCase` | `LogQuotationStatusChanged` |
+| `QuotationRejected` | `RejectQuotationUseCase` | `LogQuotationStatusChanged` |
+
+**Impacto**: Elimina la lógica de post-procesamiento de `ContractController::activate()` y carga la creación de ActivityInstances en un listener dedicado.
+
+#### Fase 2.2: Entidades de Dominio + Repositorios (V5, V6, V8, V9, V18)
+
+Para cada concepto del negocio que actualmente solo existe como modelo Eloquent:
+
+| Concepto | Entidad Domain | Repository Interface | Impl. Infrastructure | Use Cases |
+|---|---|---|---|---|
+| **Microservice** | `Domain/Entities/Microservice.php` | `MicroserviceRepositoryInterface` | `EloquentMicroserviceRepository` | `CreateMicroservice`, `UpdateMicroservice`, `ToggleActive` |
+| **Activity** | `Domain/Entities/Activity.php` | `ActivityRepositoryInterface` | `EloquentActivityRepository` | `CreateActivity`, `UpdateActivity`, `ToggleActive` |
+| **Plan** | `Domain/Entities/Plan.php` | `PlanRepositoryInterface` | `EloquentPlanRepository` | `CreatePlan`, `UpdatePlan`, `ToggleActive`, `ToggleActivity` |
+| **Prospect** | `Domain/Entities/Prospect.php` | `ProspectRepositoryInterface` | `EloquentProspectRepository` | `CreateProspect`, `UpdateProspect` |
+| **Invoice** | `Domain/Entities/Invoice.php` | `InvoiceRepositoryInterface` | `EloquentInvoiceRepository` | `CreateInvoice`, `DownloadPdf` |
+| **Amendment** | `Domain/Entities/ContractAmendment.php` | `AmendmentRepositoryInterface` | `EloquentAmendmentRepository` | `CreateAmendment` |
+
+**Patrón de implementación** (seguir el ejemplo de Contract/Quotation):
+1. Entidad con constructor posicional, getters, y métodos de negocio
+2. Interfaz de repositorio con `findById()` y `save()`
+3. Implementación Eloquent con mapeo `toEntity()` y persistencia condicional
+4. Use Case con inyección de `AuditServiceInterface` + repositorio
+5. Controller simplificado que solo valida y llama al use case
+
+#### Fase 2.3: Refactor de Controllers
+
+Controllers actuales que serán refactorizados para usar repositorios y use cases:
+
+| Controller | Método | Reemplazo |
+|---|---|---|
+| `PlanController::store()` | Creación directa Eloquent | `CreatePlanUseCase` |
+| `PlanController::update()` | Creación directa Eloquent | `UpdatePlanUseCase` |
+| `MicroserviceController::store()` | Creación directa Eloquent | `CreateMicroserviceUseCase` |
+| `ActivityController::store()` | Creación directa Eloquent | `CreateActivityUseCase` |
+| `QuotationController::store()` | Lógica de ~100 líneas | `CreateQuotationUseCase` |
+| `ContractController::store()` | Creación directa Eloquent | `CreateContractUseCase` |
+
+### 12.3 Orden de Implementación
+
+| Paso | Módulo | Días | Dependencias |
+|---|---|---|---|
+| 1 | Domain Events | 1 | Ninguna |
+| 2 | Repositorios: Microservice, Activity, Plan | 2 | Domain Events |
+| 3 | Use Cases: Microservice, Activity, Plan | 1.5 | Paso 2 |
+| 4 | Repositorios: Prospect, Invoice, Amendment | 1.5 | Domain Events |
+| 5 | Use Cases + Refactor controllers | 2 | Pasos 3-4 |
+| 6 | Domain Events wiring + cleanup | 0.5 | Pasos 1-5 |
+
+**Total estimado**: ~8.5 días
+
+### 12.4 Riesgos y Mitigaciones
+
+| Riesgo | Probabilidad | Mitigación |
+|---|---|---|
+| Romper funcionalidad existente | Media | Ejecutar 120 tests después de cada cambio |
+| Mapeo complejo Eloquent → Entity | Baja | Seguir patrón exacto de `EloquentContractRepository::toEntity()` |
+| Perder lazy loading de Eloquent | Media | Los repositorios deben eager-load relaciones necesarias |
+| Controllers muy acoplados a Eloquent | Alta | Refactor incremental: use case → repositorio → migrar controller |

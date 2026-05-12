@@ -121,21 +121,10 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('permission:audit.read');
 
     // PDF: visualización de documentos firmados
-    Route::get('pdf/contract/{contract}', function (\App\Src\Infrastructure\Persistence\Models\Contract $contract) {
-        if (!$contract->signed_pdf_path || !\Illuminate\Support\Facades\Storage::disk('local')->exists($contract->signed_pdf_path)) {
-            return back()->with('error', __('domain.contract.pdf_not_available'));
-        }
-        \App\Src\Domain\Services\AuditService::log(__('domain.audit_log.view_pdf_contract', ['number' => $contract->contract_number]), $contract, ['action' => 'view_pdf'], \App\Src\Domain\Services\AuditService::BUSINESS);
-        return response()->file(storage_path('app/' . $contract->signed_pdf_path), ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline']);
-    })->name('pdf.contract')->middleware('permission:contracts.read');
-
-    Route::get('pdf/amendment/{amendment}', function (\App\Src\Infrastructure\Persistence\Models\ContractAmendment $amendment) {
-        if (!$amendment->signed_pdf_path || !\Illuminate\Support\Facades\Storage::disk('local')->exists($amendment->signed_pdf_path)) {
-            return back()->with('error', __('domain.contract.pdf_not_available'));
-        }
-        \App\Src\Domain\Services\AuditService::log(__('domain.audit_log.view_pdf_amendment', ['number' => $amendment->amendment_number]), $amendment, ['action' => 'view_pdf'], \App\Src\Domain\Services\AuditService::BUSINESS);
-        return response()->file(storage_path('app/' . $amendment->signed_pdf_path), ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline']);
-    })->name('pdf.amendment')->middleware('permission:amendments.read');
+    Route::get('pdf/contract/{contract}', [\App\Src\Infrastructure\Http\Controllers\Web\PdfController::class, 'contract'])
+        ->name('pdf.contract')->middleware('permission:contracts.read');
+    Route::get('pdf/amendment/{amendment}', [\App\Src\Infrastructure\Http\Controllers\Web\PdfController::class, 'amendment'])
+        ->name('pdf.amendment')->middleware('permission:amendments.read');
 
     // Módulo: Financiero (Facturación)
     Route::middleware(['permission:invoices.read'])->group(function () {

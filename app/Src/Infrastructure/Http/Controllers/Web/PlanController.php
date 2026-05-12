@@ -3,6 +3,12 @@
 namespace App\Src\Infrastructure\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Src\Domain\Contracts\AuditServiceInterface;
+use App\Src\Domain\Entities\Plan as PlanEntity;
+use App\Src\Domain\Repositories\ActivityRepositoryInterface;
+use App\Src\Domain\Repositories\MicroserviceRepositoryInterface;
+use App\Src\Domain\Repositories\PlanRepositoryInterface;
+use App\Src\Domain\Services\AuditService;
 use App\Src\Infrastructure\Persistence\Models\Activity;
 use App\Src\Infrastructure\Persistence\Models\Microservice;
 use App\Src\Infrastructure\Persistence\Models\Plan;
@@ -10,7 +16,6 @@ use App\Src\Infrastructure\Persistence\Models\PlanActivity;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use App\Src\Domain\Services\AuditService;
 
 /**
  * Controlador para la gestión de planes comerciales.
@@ -19,9 +24,11 @@ use App\Src\Domain\Services\AuditService;
  */
 class PlanController extends Controller
 {
-    /**
-     * Lista paginada de planes con sus servicios y microservicios asociados.
-     */
+    public function __construct(
+        private PlanRepositoryInterface $planRepository,
+        private AuditServiceInterface $auditService,
+    ) {}
+
     public function index(): View
     {
         $plans = Plan::with(['services.microservice', 'planActivities.activity'])
@@ -29,9 +36,6 @@ class PlanController extends Controller
         return view('plans.index', compact('plans'));
     }
 
-    /**
-     * Muestra el formulario de creación con la lista de microservicios activos.
-     */
     public function create(): View
     {
         return view('plans.form', [
@@ -41,9 +45,6 @@ class PlanController extends Controller
         ]);
     }
 
-    /**
-     * Almacena un nuevo plan con sus servicios asociados y registra auditoría.
-     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -54,14 +55,22 @@ class PlanController extends Controller
 
         $servicesData = $this->parseAndValidateServices($validated['services_data']);
 
-        $plan = Plan::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-        ]);
+        $entity = new PlanEntity(
+            id: null,
+            name: $validated['name'],
+            description: $validated['description'] ?? null,
+            isActive: true,
+            services: $servicesData,
+        );
 
-        $this->savePlanServices($plan, $servicesData);
+        $this->planRepository->save($entity);
 
-        AuditService::logCreate($plan, 'Plan', $validated);
+        $plan = Plan::where('name', $validated['name'])->latest()->first();
+        if ($plan) {
+            $this->savePlanServices($plan, $servicesData);
+        }
+
+        $this->auditService->logCreate($entity, 'Plan', $validated);
 
         return to_route('plans.index')
             ->with('success', __('domain.plan.created'));

@@ -5,33 +5,33 @@ namespace App\Src\Domain\Repositories;
 use App\Src\Domain\Entities\Contract;
 
 /**
- * Repository interface for Contract aggregate persistence.
+ * Interfaz de repositorio para la persistencia del agregado Contract.
  *
- * Defines the contract for storing and retrieving Contract entities.
- * Implementations can use Eloquent, Doctrine, or any other data source.
+ * Define el contrato para almacenar y recuperar entidades de Contract.
+ * Las implementaciones pueden usar Eloquent, Doctrine o cualquier otra fuente de datos.
  */
 interface ContractRepositoryInterface
 {
     /**
-     * Finds a contract by its primary identifier.
+     * Busca un contract por su identificador primario.
      *
-     * @param int $id The contract ID
-     * @return Contract|null The contract entity or null if not found
+     * @param int $id El ID de contract
+     * @return Contract|null La entidad de contract o null si no se encuentra
      */
     public function findById(int $id): ?Contract;
 
     /**
-     * Persists a contract entity (insert or update).
+     * Persiste una entidad de contract (insertar o actualizar).
      *
      * @param Contract $contract The contract entity to save
      */
     public function save(Contract $contract): void;
 
     /**
-     * Retrieves all contracts matching a given status.
+     * Recupera todos los contratos que coinciden con un estado dado.
      *
-     * @param string $status The contract status value to filter by
-     * @return Contract[] Array of matching contract entities
+     * @param string $status El valor del estado del contrato por el cual filtrar
+     * @return Contract[] Array de entidades de contract coincidentes
      */
     public function findByStatus(string $status): array;
 }

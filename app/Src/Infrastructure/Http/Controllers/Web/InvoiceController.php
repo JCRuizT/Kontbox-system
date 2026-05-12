@@ -3,25 +3,24 @@
 namespace App\Src\Infrastructure\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Src\Domain\Contracts\AuditServiceInterface;
+use App\Src\Domain\Entities\Invoice as InvoiceEntity;
 use App\Src\Domain\Enums\ContractStatus;
+use App\Src\Domain\Repositories\InvoiceRepositoryInterface;
+use App\Src\Domain\Services\AuditService;
 use App\Src\Infrastructure\Persistence\Models\Contract;
 use App\Src\Infrastructure\Persistence\Models\Invoice;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use App\Src\Domain\Services\AuditService;
 
-/**
- * Controlador para la gestión de facturas representativas (sin validez fiscal).
- * Las facturas generadas aquí son documentos informativos/comerciales
- * basados en contratos activos, sin validez fiscal electrónica (no son CFDI).
- */
 class InvoiceController extends Controller
 {
-    /**
-     * Lista paginada de facturas con su contrato, prospecto y creador.
-     */
+    public function __construct(
+        private InvoiceRepositoryInterface $invoiceRepository,
+        private AuditServiceInterface $auditService,
+    ) {}
+
     public function index(): View
     {
         $invoices = Invoice::with(['contract.quotation.prospect', 'createdBy'])
@@ -65,17 +64,21 @@ class InvoiceController extends Controller
             return back()->withInput()->with('error', __('domain.invoice.contract_must_be_active'));
         }
 
-        $invoice = Invoice::create([
-            'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . random_int(1000, 9999),
-            'contract_id' => $validated['contract_id'],
-            'amount' => $validated['amount'],
-            'issued_date' => $validated['issued_date'],
-            'status' => 'issued',
-            'notes' => $validated['notes'] ?? null,
-            'created_by' => auth()->id(),
-        ]);
+        $entity = new InvoiceEntity(
+            id: null,
+            invoiceNumber: 'INV-' . now()->format('Ymd') . '-' . random_int(1000, 9999),
+            contractId: $validated['contract_id'],
+            amount: $validated['amount'],
+            issuedDate: new \DateTimeImmutable($validated['issued_date']),
+            status: 'issued',
+            notes: $validated['notes'] ?? null,
+            createdBy: auth()->id(),
+        );
 
-        AuditService::logCreate($invoice, 'Factura', $validated);
+        $this->invoiceRepository->save($entity);
+        $this->auditService->logCreate($entity, 'Factura', $validated);
+
+        $invoice = Invoice::latest()->first();
 
         return to_route('invoices.show', $invoice)
             ->with('success', __('domain.invoice.created'));

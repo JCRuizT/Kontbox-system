@@ -5,45 +5,45 @@ namespace App\Src\Domain\ValueObjects;
 /**
  * Value Object inmutable para representar dinero con moneda.
  *
- * Encapsulates monetary values with currency awareness to prevent
- * mixing currencies in arithmetic operations. All operations return
- * new instances to guarantee immutability.
+ * Encapsula valores monetarios con conocimiento de moneda para evitar
+ * mezclar monedas en operaciones aritméticas. Todas las operaciones retornan
+ * nuevas instancias para garantizar la inmutabilidad.
  */
 class Money
 {
     /**
-     * @param float  $amount   The numeric monetary value
-     * @param string $currency ISO 4217 currency code, defaults to COP (Colombian Peso)
+     * @param float  $amount   El valor monetario numérico
+     * @param string $currency Código de moneda ISO 4217, por defecto COP (Peso Colombiano)
      *
-     * @throws \InvalidArgumentException if amount is negative
+     * @throws \InvalidArgumentException si el monto es negativo
      */
     public function __construct(
         private float $amount,
         private string $currency = 'COP',
     ) {
         if ($amount < 0) {
-            throw new \InvalidArgumentException(__('domain.error.negative_amount'));
+            throw new \InvalidArgumentException('domain.error.negative_amount');
         }
     }
 
-    /** Returns the numeric amount. */
+    /** Retorna el monto numérico. */
     public function amount(): float
     {
         return $this->amount;
     }
 
-    /** Returns the ISO 4217 currency code. */
+    /** Retorna el código de moneda ISO 4217. */
     public function currency(): string
     {
         return $this->currency;
     }
 
     /**
-     * Adds another Money instance to this one, returning a new instance.
+     * Suma otra instancia de Money a esta, retornando una nueva instancia.
      *
-     * @param Money $other The money to add
-     * @return self A new Money instance with the summed amount
-     * @throws \InvalidArgumentException if currencies do not match
+     * @param Money $other El dinero a sumar
+     * @return self Una nueva instancia de Money con el monto summed
+     * @throws \InvalidArgumentException si las monedas no coinciden
      */
     public function add(Money $other): self
     {
@@ -54,11 +54,11 @@ class Money
     }
 
     /**
-     * Multiplies the amount by a given quantity, returning a new instance.
-     * Useful for calculating line-item totals.
+     * Multiplica el monto por una cantidad dada, retornando una nueva instancia.
+     * Útil para calcular totales de items de línea.
      *
-     * @param int $quantity The multiplier
-     * @return self A new Money instance with the multiplied amount
+     * @param int $quantity El multiplicador
+     * @return self Una nueva instancia de Money con el monto multiplied
      */
     public function multiply(int $quantity): self
     {
@@ -66,8 +66,8 @@ class Money
     }
 
     /**
-     * Formats the monetary value for display using Colombian locale convention.
-     * Example output: $1.234.567,89
+     * Formatea el valor monetario para visualización usando la convención locale colombiana.
+     * Ejemplo de salida: .234.567,89
      */
     public function format(): string
     {

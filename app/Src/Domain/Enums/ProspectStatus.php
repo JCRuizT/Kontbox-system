@@ -3,9 +3,9 @@
 namespace App\Src\Domain\Enums;
 
 /**
- * Defines the stages of a prospect through the sales pipeline.
+ * Define las etapas de un prospecto a través del pipeline de ventas.
  *
- * Represents the typical CRM funnel: lead acquisition, contact, negotiation, and outcome.
+ * Representa el funnel CRM típico: adquisición, contacto, negociación y resultado.
  */
 enum ProspectStatus: string
 {
@@ -26,7 +26,7 @@ enum ProspectStatus: string
 
     /**
      * Returns the human-readable label for the current prospect status.
-     * Uses Laravel's __() helper for i18n support.
+     * Usa el helper __() de Laravel para soporte i18n.
      */
     public function label(): string
     {

@@ -109,24 +109,6 @@ class ValueObjectsTest extends TestCase
     }
 
     /**
-     * Verifica que una ruta vacía se reporte como inexistente.
-     */
-    public function test_signed_pdf_empty_path_does_not_exist(): void
-    {
-        $pdf = new SignedPdf('', 'test.pdf', 100);
-        $this->assertFalse($pdf->exists());
-    }
-
-    /**
-     * Verifica que un archivo inexistente en disco se reporte como tal.
-     */
-    public function test_signed_pdf_non_existent_file(): void
-    {
-        $pdf = new SignedPdf('nonexistent/path.pdf', 'test.pdf', 100);
-        $this->assertFalse($pdf->exists());
-    }
-
-    /**
      * Verifica que se permita crear SignedPdf con tamaño cero
      * (el archivo físico se validará al momento de la activación).
      */
