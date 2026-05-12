@@ -26,7 +26,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
-                @foreach ($users as $u)
+                @forelse ($users as $u)
                 <tr class="hover:bg-gray-50/50 transition">
                     <td class="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
                         <div class="flex items-center space-x-3">
@@ -67,7 +67,9 @@
                         </div>
                     </td>
                 </tr>
-                @endforeach
+                @empty
+                <tr><td colspan="5" class="px-4 sm:px-5 py-16 text-center">@include('components.empty-state', ['title' => __('ui.admin_users.empty_title'), 'description' => __('ui.admin_users.empty_desc'), 'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'])</td></tr>
+                @endforelse
             </tbody>
         </table>
         </div>

@@ -65,13 +65,7 @@
                 </td>
             </tr>
             @empty
-            <tr>
-                <td colspan="6" class="text-center py-16 text-gray-400">
-                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
-                    <p class="text-lg font-medium">{{ __('ui.invoices.empty_title') }}</p>
-                    <p class="text-sm mt-1">{{ __('ui.invoices.empty_desc') }}</p>
-                </td>
-            </tr>
+            <tr><td colspan="6" class="px-4 sm:px-5 py-16 text-center">@include('components.empty-state', ['title' => __('ui.invoices.empty_title'), 'description' => __('ui.invoices.empty_desc'), 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1'])</td></tr>
             @endforelse
         </tbody>
     </table>

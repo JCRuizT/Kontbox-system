@@ -26,7 +26,7 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
-                @foreach ($microservices as $ms)
+                @forelse ($microservices as $ms)
                 <tr class="hover:bg-gray-50/50 transition">
                     <td class="px-4 sm:px-5 py-3 sm:py-4 whitespace-nowrap">
                         <p class="font-medium text-gray-900">{{ $ms->name }}</p>
@@ -71,7 +71,9 @@
                         </div>
                     </td>
                 </tr>
-                @endforeach
+                @empty
+                <tr><td colspan="5" class="px-4 sm:px-5 py-16 text-center">@include('components.empty-state', ['title' => __('ui.microservices.empty_title'), 'description' => __('ui.microservices.empty_desc'), 'icon' => 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'])</td></tr>
+                @endforelse
             </tbody>
         </table>
     </div>

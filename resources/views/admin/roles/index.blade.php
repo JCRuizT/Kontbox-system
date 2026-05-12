@@ -16,7 +16,7 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        @foreach($roles as $role)
+        @forelse($roles as $role)
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 card-hover">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-3">
@@ -75,7 +75,9 @@
                 </form>
             </div>
         </div>
-        @endforeach
+        @empty
+        @include('components.empty-state', ['title' => __('ui.admin_roles.empty_title'), 'description' => __('ui.admin_roles.empty_desc'), 'icon' => 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'])
+        @endforelse
     </div>
 </div>
 @endsection

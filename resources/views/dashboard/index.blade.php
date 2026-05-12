@@ -114,7 +114,7 @@
                             <td class="px-2 sm:px-3 py-2 text-xs text-gray-500 hidden sm:table-cell">{{ $log->causer->name ?? __('ui.reviews.system') }}</td>
                         </tr>
                         @empty
-                        <tr><td colspan="3" class="px-2 sm:px-3 py-8 text-center text-sm text-gray-400">{{ __('ui.dashboard_page.no_activity') }}</td></tr>
+                        <tr><td colspan="3" class="px-4 sm:px-5 py-16 text-center">@include('components.empty-state', ['title' => __('ui.dashboard_page.no_activity'), 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'])</td></tr>
                         @endforelse
                     </tbody>
                 </table>
