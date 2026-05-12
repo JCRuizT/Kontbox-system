@@ -8,16 +8,20 @@ use App\Src\Infrastructure\Http\Controllers\Web\MicroserviceController;
 use App\Src\Infrastructure\Http\Controllers\Web\PlanController;
 use App\Src\Infrastructure\Http\Controllers\Web\ProspectController;
 use App\Src\Infrastructure\Http\Controllers\Web\QuotationController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Src\Infrastructure\Http\Controllers\Web\AdminController;
+use App\Src\Infrastructure\Http\Controllers\Web\PdfController;
+use App\Src\Infrastructure\Http\Controllers\Web\ReviewController;
 use App\Src\Infrastructure\Http\Controllers\Web\SearchController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas de autenticación
 Route::middleware('guest')->group(function () {
     Route::get('login', fn () => view('auth.login'))->name('login');
-    Route::post('login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
+    Route::post('login', [LoginController::class, 'login']);
 });
 
-Route::post('logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])
+Route::post('logout', [LoginController::class, 'logout'])
     ->name('logout')
     ->middleware('auth');
 
@@ -78,7 +82,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Módulo: Aprobación (Panel de revisión)
-    Route::get('reviews', [\App\Src\Infrastructure\Http\Controllers\Web\ReviewController::class, 'index'])
+    Route::get('reviews', [ReviewController::class, 'index'])
         ->name('reviews.index')
         ->middleware('permission:quotations.approve');
 
@@ -121,9 +125,9 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('permission:audit.read');
 
     // PDF: visualización de documentos firmados
-    Route::get('pdf/contract/{contract}', [\App\Src\Infrastructure\Http\Controllers\Web\PdfController::class, 'contract'])
+    Route::get('pdf/contract/{contract}', [PdfController::class, 'contract'])
         ->name('pdf.contract')->middleware('permission:contracts.read');
-    Route::get('pdf/amendment/{amendment}', [\App\Src\Infrastructure\Http\Controllers\Web\PdfController::class, 'amendment'])
+    Route::get('pdf/amendment/{amendment}', [PdfController::class, 'amendment'])
         ->name('pdf.amendment')->middleware('permission:amendments.read');
 
     // Módulo: Financiero (Facturación)
@@ -135,19 +139,19 @@ Route::middleware(['auth'])->group(function () {
     // Módulo: Administración (Usuarios, Roles) — protegido por permiso dinámico admin.access
     Route::middleware(['permission:admin.access'])->prefix('admin')->name('admin.')->group(function () {
         // Usuarios
-        Route::get('users', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'users'])->name('users');
-        Route::get('users/create', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'usersCreate'])->name('users.create');
-        Route::post('users', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'usersStore'])->name('users.store');
-        Route::get('users/{user}/edit', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'usersEdit'])->name('users.edit');
-        Route::put('users/{user}', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'usersUpdate'])->name('users.update');
-        Route::post('users/{user}/delete', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'usersDelete'])->name('users.delete');
-        Route::post('users/{id}/restore', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'usersRestore'])->name('users.restore');
+        Route::get('users', [AdminController::class, 'users'])->name('users');
+        Route::get('users/create', [AdminController::class, 'usersCreate'])->name('users.create');
+        Route::post('users', [AdminController::class, 'usersStore'])->name('users.store');
+        Route::get('users/{user}/edit', [AdminController::class, 'usersEdit'])->name('users.edit');
+        Route::put('users/{user}', [AdminController::class, 'usersUpdate'])->name('users.update');
+        Route::post('users/{user}/delete', [AdminController::class, 'usersDelete'])->name('users.delete');
+        Route::post('users/{id}/restore', [AdminController::class, 'usersRestore'])->name('users.restore');
         // Roles
-        Route::get('roles', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'roles'])->name('roles');
-        Route::get('roles/create', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'rolesCreate'])->name('roles.create');
-        Route::post('roles', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'rolesStore'])->name('roles.store');
-        Route::get('roles/{role}/edit', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'rolesEdit'])->name('roles.edit');
-        Route::put('roles/{role}', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'rolesUpdate'])->name('roles.update');
-        Route::put('roles/{role}/rename', [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'rolesRename'])->name('roles.rename');
+        Route::get('roles', [AdminController::class, 'roles'])->name('roles');
+        Route::get('roles/create', [AdminController::class, 'rolesCreate'])->name('roles.create');
+        Route::post('roles', [AdminController::class, 'rolesStore'])->name('roles.store');
+        Route::get('roles/{role}/edit', [AdminController::class, 'rolesEdit'])->name('roles.edit');
+        Route::put('roles/{role}', [AdminController::class, 'rolesUpdate'])->name('roles.update');
+        Route::put('roles/{role}/rename', [AdminController::class, 'rolesRename'])->name('roles.rename');
     });
 });

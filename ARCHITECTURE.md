@@ -402,6 +402,16 @@ protected $listen = [
 ## 8. Convenciones de Código
 
 ### Formato de Código
+- **Imports**: Usar SIEMPRE `use` al inicio del archivo, NUNCA rutas FQCN inline
+  ```php
+  // ✅ Correcto
+  use App\Src\Infrastructure\Http\Controllers\Web\AdminController;
+  // ...
+  [AdminController::class, 'users']
+  
+  // ❌ Incorrecto
+  [\App\Src\Infrastructure\Http\Controllers\Web\AdminController::class, 'users']
+  ```
 - **Getters**: SIEMPRE multi-línea, NUNCA en una sola línea
   ```php
   // ✅ Correcto
@@ -457,6 +467,7 @@ protected $listen = [
 | `request()`/`auth()` en Domain/Aplication | `auth()->id()` en Use Case | Pasar como parámetro |
 | Auditoría en Controller | `AuditService::log()` después de use case | Domain Events + Listeners |
 | Código duplicado Web/API | Dos `store()` idénticos | Use Case compartido |
+| **FQCN inline** | `[\App\Src\...\AdminController::class, 'roles']` | Import `use` al inicio del archivo |
 
 ---
 
