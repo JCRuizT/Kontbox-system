@@ -133,8 +133,7 @@ class ViewsTest extends TestCase
     public function test_activities_index_view(): void
     {
         $ms = Microservice::create(['name' => 'ActSrv', 'base_cost' => 50, 'type' => 'recurring']);
-        Activity::create(['name' => 'Monitoreo', 'is_active' => true]);
-        $ms->update(['activity_id' => Activity::first()->id]);
+        Activity::create(['name' => 'Monitoreo', 'is_active' => true, 'microservice_id' => $ms->id]);
         $this->actingAs($this->admin)
             ->get(route('activities.index'))
             ->assertStatus(200);

@@ -14,7 +14,6 @@ return new class extends Migration
             $table->foreignId('activity_id')->constrained()->cascadeOnDelete();
             $table->boolean('is_enabled')->default(true);
             $table->timestamps();
-
             $table->unique(['plan_id', 'activity_id']);
         });
     }

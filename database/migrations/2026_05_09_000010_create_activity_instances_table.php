@@ -13,6 +13,7 @@ return new class extends Migration
             $table->foreignId('contract_id')->constrained()->cascadeOnDelete();
             $table->foreignId('activity_id')->constrained();
             $table->string('status')->default('pending');
+            $table->boolean('is_enabled')->default(true);
             $table->timestamps();
         });
     }

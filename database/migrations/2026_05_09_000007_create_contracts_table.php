@@ -18,6 +18,9 @@ return new class extends Migration
             $table->date('end_date')->nullable();
             $table->decimal('total_amount', 12, 2)->default(0);
             $table->timestamp('signed_pdf_uploaded_at')->nullable();
+            $table->string('signed_pdf_path')->nullable();
+            $table->string('signed_pdf_original_name')->nullable();
+            $table->unsignedInteger('signed_pdf_size')->nullable();
             $table->timestamp('activated_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();
             $table->text('cancellation_reason')->nullable();
@@ -28,9 +31,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('contract_id')->constrained()->cascadeOnDelete();
             $table->foreignId('microservice_id')->constrained();
-            $table->integer('quantity')->default(1);
             $table->decimal('unit_price', 12, 2);
             $table->decimal('total_price', 12, 2);
+            $table->boolean('is_enabled')->default(true);
             $table->timestamps();
         });
     }

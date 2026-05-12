@@ -13,6 +13,8 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_custom')->default(false);
+            $table->foreignId('parent_plan_id')->nullable()->constrained('plans')->nullOnDelete();
             $table->timestamps();
         });
 
@@ -20,10 +22,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('plan_id')->constrained()->cascadeOnDelete();
             $table->foreignId('microservice_id')->constrained();
-            $table->integer('quantity')->default(1);
             $table->decimal('custom_price', 12, 2)->nullable();
             $table->timestamps();
-
             $table->unique(['plan_id', 'microservice_id']);
         });
     }

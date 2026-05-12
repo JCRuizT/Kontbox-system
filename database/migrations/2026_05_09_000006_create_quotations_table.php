@@ -31,9 +31,9 @@ return new class extends Migration
             $table->foreignId('microservice_id')->constrained();
             $table->string('service_name_snapshot');
             $table->text('description_snapshot')->nullable();
-            $table->integer('quantity')->default(1);
             $table->decimal('unit_price', 12, 2);
             $table->decimal('total_price', 12, 2);
+            $table->json('excluded_activities')->nullable();
             $table->timestamps();
         });
     }

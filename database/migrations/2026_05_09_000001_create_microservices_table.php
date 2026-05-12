@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->decimal('base_cost', 12, 2)->default(0);
-            $table->string('type'); // recurring, one_time
+            $table->string('type');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
