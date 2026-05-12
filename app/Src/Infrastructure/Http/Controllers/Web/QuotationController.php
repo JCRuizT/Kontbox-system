@@ -7,6 +7,7 @@ use App\Src\Domain\Enums\QuotationStatus;
 use App\Src\Application\UseCases\Quotations\ApproveQuotationUseCase;
 use App\Src\Application\UseCases\Quotations\RejectQuotationUseCase;
 use App\Src\Application\UseCases\Quotations\SendQuotationForApprovalUseCase;
+use App\Src\Application\Services\QuotationPricingService;
 use App\Src\Infrastructure\Persistence\Models\Microservice;
 use App\Src\Infrastructure\Persistence\Models\Plan;
 use App\Src\Infrastructure\Persistence\Models\Prospect;
@@ -150,7 +151,7 @@ class QuotationController extends Controller
             }
         }
 
-        $pricing = app(\App\Src\Application\Services\QuotationPricingService::class)->calculate($items);
+        $pricing = app(QuotationPricingService::class)->calculate($items);
         $subtotal = $pricing['subtotal'];
         $tax = $pricing['tax'];
         $total = $pricing['total'];

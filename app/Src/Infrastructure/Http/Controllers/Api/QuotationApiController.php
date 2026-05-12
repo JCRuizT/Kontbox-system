@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Src\Application\UseCases\Quotations\ApproveQuotationUseCase;
 use App\Src\Application\UseCases\Quotations\RejectQuotationUseCase;
 use App\Src\Application\UseCases\Quotations\SendQuotationForApprovalUseCase;
+use App\Src\Application\Services\QuotationPricingService;
 use App\Src\Domain\Enums\QuotationStatus;
 use App\Src\Domain\Services\AuditService;
 use App\Src\Infrastructure\Persistence\Models\Microservice;
@@ -43,7 +44,7 @@ class QuotationApiController extends Controller
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
 
-        $pricing = app(\App\Src\Application\Services\QuotationPricingService::class)->calculate($validated['items']);
+        $pricing = app(QuotationPricingService::class)->calculate($validated['items']);
         $subtotal = $pricing['subtotal'];
         $tax = $pricing['tax'];
         $total = $subtotal + $tax;

@@ -7,6 +7,7 @@ use App\Src\Domain\Contracts\AuditServiceInterface;
 use App\Src\Domain\Entities\Microservice as MicroserviceEntity;
 use App\Src\Domain\Repositories\MicroserviceRepositoryInterface;
 use App\Src\Domain\Services\AuditService;
+use App\Src\Infrastructure\Persistence\Models\Microservice;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -25,7 +26,7 @@ class MicroserviceController extends Controller
 
     public function index(): View
     {
-        $microservices = \App\Src\Infrastructure\Persistence\Models\Microservice::paginate(config('kontbox.items_per_page'));
+        $microservices = Microservice::paginate(config('kontbox.items_per_page'));
         return view('microservices.index', compact('microservices'));
     }
 
@@ -60,12 +61,12 @@ class MicroserviceController extends Controller
             ->with('success', __('domain.microservice.created'));
     }
 
-    public function edit(\App\Src\Infrastructure\Persistence\Models\Microservice $microservice): View
+    public function edit(Microservice $microservice): View
     {
         return view('microservices.form', compact('microservice'));
     }
 
-    public function update(Request $request, \App\Src\Infrastructure\Persistence\Models\Microservice $microservice): RedirectResponse
+    public function update(Request $request, Microservice $microservice): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -87,7 +88,7 @@ class MicroserviceController extends Controller
             ->with('success', __('domain.microservice.updated'));
     }
 
-    public function destroy(\App\Src\Infrastructure\Persistence\Models\Microservice $microservice): RedirectResponse
+    public function destroy(Microservice $microservice): RedirectResponse
     {
         $microservice->update(['is_active' => false]);
         AuditService::logDelete($microservice, 'Microservicio');
@@ -96,7 +97,7 @@ class MicroserviceController extends Controller
             ->with('success', __('domain.microservice.deactivated'));
     }
 
-    public function activate(\App\Src\Infrastructure\Persistence\Models\Microservice $microservice): RedirectResponse
+    public function activate(Microservice $microservice): RedirectResponse
     {
         $microservice->update(['is_active' => true]);
         AuditService::log('Reactivated microservice', $microservice, ['action' => 'activate', 'microservice_id' => $microservice->id], AuditService::CRUD);

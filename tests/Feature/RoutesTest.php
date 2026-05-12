@@ -7,7 +7,9 @@ use App\Src\Domain\Enums\ContractStatus;
 use App\Src\Infrastructure\Persistence\Models\Microservice;
 use App\Src\Infrastructure\Persistence\Models\Plan;
 use App\Src\Infrastructure\Persistence\Models\Prospect;
+use App\Src\Infrastructure\Persistence\Models\Contract;
 use App\Src\Infrastructure\Persistence\Models\Quotation;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -33,7 +35,7 @@ class RoutesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $this->admin = User::factory()->create(['name' => 'Admin']);
         $this->admin->assignRole('admin');
@@ -312,7 +314,7 @@ class RoutesTest extends TestCase
         $prospect = Prospect::create(['company_name' => 'ICorp', 'contact_name' => 'I', 'email' => 'i@t.com', 'created_by' => $this->admin->id]);
         $ms = Microservice::create(['name' => 'ISrv', 'base_cost' => 100, 'type' => 'recurring']);
         $q = Quotation::create(['quote_number' => 'COT-I-001', 'prospect_id' => $prospect->id, 'created_by' => $this->admin->id, 'status' => 'approved', 'subtotal' => 100, 'tax' => 19, 'total' => 119, 'version' => 1]);
-        $contract = \App\Src\Infrastructure\Persistence\Models\Contract::create([
+        $contract = Contract::create([
             'contract_number' => 'CTR-I-001', 'quotation_id' => $q->id, 'approved_by' => $this->admin->id,
             'status' => ContractStatus::ACTIVE->value, 'total_amount' => 119,
         ]);

@@ -3,8 +3,16 @@
 namespace Database\Seeders;
 
 use App\Src\Infrastructure\Persistence\Models\Activity;
+use App\Src\Infrastructure\Persistence\Models\Contract;
+use App\Src\Infrastructure\Persistence\Models\ContractAmendment;
+use App\Src\Infrastructure\Persistence\Models\ContractService;
+use App\Src\Infrastructure\Persistence\Models\Invoice;
 use App\Src\Infrastructure\Persistence\Models\Microservice;
 use App\Src\Infrastructure\Persistence\Models\Plan;
+use App\Src\Infrastructure\Persistence\Models\PlanService;
+use App\Src\Infrastructure\Persistence\Models\Prospect;
+use App\Src\Infrastructure\Persistence\Models\Quotation;
+use App\Src\Infrastructure\Persistence\Models\QuotationItem;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Schema;
 
@@ -18,15 +26,15 @@ class AccountingSeedDataSeeder extends Seeder
         // 1. Eliminar datos existentes (orden inverso a FK)
         Schema::disableForeignKeyConstraints();
 
-        \Spatie\Activitylog\Models\Activity::query()->delete();
-        \App\Src\Infrastructure\Persistence\Models\Invoice::query()->delete();
-        \App\Src\Infrastructure\Persistence\Models\ContractAmendment::query()->delete();
-        \App\Src\Infrastructure\Persistence\Models\ContractService::query()->delete();
-        \App\Src\Infrastructure\Persistence\Models\Contract::query()->delete();
-        \App\Src\Infrastructure\Persistence\Models\QuotationItem::query()->delete();
-        \App\Src\Infrastructure\Persistence\Models\Quotation::query()->delete();
-        \App\Src\Infrastructure\Persistence\Models\Prospect::query()->delete();
-        \App\Src\Infrastructure\Persistence\Models\PlanService::query()->delete();
+        Activity::query()->delete();
+        Invoice::query()->delete();
+        ContractAmendment::query()->delete();
+        ContractService::query()->delete();
+        Contract::query()->delete();
+        QuotationItem::query()->delete();
+        Quotation::query()->delete();
+        Prospect::query()->delete();
+        PlanService::query()->delete();
         Plan::query()->delete();
         Activity::query()->delete();
         Microservice::query()->delete();

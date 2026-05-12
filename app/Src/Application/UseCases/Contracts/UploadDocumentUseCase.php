@@ -3,6 +3,7 @@ namespace App\Src\Application\UseCases\Contracts;
 
 use App\Src\Domain\Contracts\AuditServiceInterface;
 use App\Src\Domain\Entities\Contract;
+use App\Src\Domain\Exceptions\ContractNotFoundException;
 use App\Src\Domain\Repositories\ContractRepositoryInterface;
 use App\Src\Domain\ValueObjects\SignedPdf;
 
@@ -24,7 +25,7 @@ class UploadDocumentUseCase
         $contract = $this->contractRepository->findById($contractId);
 
         if (! $contract) {
-            throw new \App\Src\Domain\Exceptions\ContractNotFoundException($contractId);
+            throw new ContractNotFoundException($contractId);
         }
 
         $pdf = new SignedPdf($path, $originalName, $size);

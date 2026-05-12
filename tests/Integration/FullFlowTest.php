@@ -4,11 +4,19 @@ namespace Tests\Integration;
 
 use App\Models\User;
 use App\Src\Domain\Enums\ContractStatus;
+use App\Src\Application\UseCases\Contracts\ActivateContractUseCase;
+use App\Src\Application\UseCases\Contracts\AnulateContractUseCase;
+use App\Src\Application\UseCases\Contracts\UploadDocumentUseCase;
+use App\Src\Application\UseCases\Quotations\ApproveQuotationUseCase;
+use App\Src\Application\UseCases\Quotations\RejectQuotationUseCase;
+use App\Src\Application\UseCases\Quotations\SendQuotationForApprovalUseCase;
 use App\Src\Domain\Enums\QuotationStatus;
 use App\Src\Domain\Services\AuditService;
 use App\Src\Infrastructure\Persistence\Models\Contract;
+use App\Src\Infrastructure\Persistence\Models\Invoice;
 use App\Src\Infrastructure\Persistence\Models\Prospect;
 use App\Src\Infrastructure\Persistence\Models\Quotation;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -36,7 +44,7 @@ class FullFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $this->admin = User::factory()->create(['name' => 'Admin']);
         $this->admin->assignRole('admin');
@@ -84,13 +92,13 @@ class FullFlowTest extends TestCase
         AuditService::logCreate($q, 'Cotización', ['prospect' => $this->prospect->id]);
 
         // 2. VENDEDOR envía a aprobación → En Revisión
-        $useCase = app(\App\Src\Application\UseCases\Quotations\SendQuotationForApprovalUseCase::class);
+        $useCase = app(SendQuotationForApprovalUseCase::class);
         $useCase->execute($q->id);
         $q->refresh();
         $this->assertEquals(QuotationStatus::UNDER_REVIEW->value, $q->status);
 
         // 3. GERENTE aprueba → Aprobada
-        $approveUseCase = app(\App\Src\Application\UseCases\Quotations\ApproveQuotationUseCase::class);
+        $approveUseCase = app(ApproveQuotationUseCase::class);
         $approveUseCase->execute($q->id);
         $q->refresh();
         $this->assertEquals(QuotationStatus::APPROVED->value, $q->status);
@@ -106,7 +114,7 @@ class FullFlowTest extends TestCase
         AuditService::logCreate($contract, 'Contrato', ['quotation' => $q->id]);
 
         // 5. SUBIR PDF firmado (vía caso de uso) → Documento Cargado
-        $uploadUseCase = app(\App\Src\Application\UseCases\Contracts\UploadDocumentUseCase::class);
+        $uploadUseCase = app(UploadDocumentUseCase::class);
         $uploadUseCase->execute($contract->id, 'contracts/int/test.pdf', 'contrato_firmado.pdf', 2048);
         $contract->refresh();
         $this->assertEquals(ContractStatus::DOCUMENT_LOADED->value, $contract->status);
@@ -119,14 +127,14 @@ class FullFlowTest extends TestCase
         if (!is_dir($dir)) mkdir($dir, 0755, true);
         file_put_contents($fullPath, 'fake-pdf-content');
 
-        $activateUseCase = app(\App\Src\Application\UseCases\Contracts\ActivateContractUseCase::class);
+        $activateUseCase = app(ActivateContractUseCase::class);
         $activateUseCase->execute($contract->id);
         $contract->refresh();
         $this->assertEquals(ContractStatus::ACTIVE->value, $contract->status);
         $this->assertNotNull($contract->activated_at);
 
         // 7. CREAR FACTURA sobre contrato activo
-        $invoice = \App\Src\Infrastructure\Persistence\Models\Invoice::create([
+        $invoice = Invoice::create([
             'invoice_number' => 'INV-INT-001',
             'contract_id' => $contract->id,
             'amount' => 595000,
@@ -138,7 +146,7 @@ class FullFlowTest extends TestCase
         $this->assertDatabaseHas('invoices', ['invoice_number' => 'INV-INT-001']);
 
         // 8. ANULAR contrato → Cancelado
-        $anulateUseCase = app(\App\Src\Application\UseCases\Contracts\AnulateContractUseCase::class);
+        $anulateUseCase = app(AnulateContractUseCase::class);
         $anulateUseCase->execute($contract->id, 'Fin del período contractual');
         $contract->refresh();
         $this->assertEquals(ContractStatus::CANCELLED->value, $contract->status);
@@ -171,7 +179,7 @@ class FullFlowTest extends TestCase
         ]);
 
         // Rechazar con motivo
-        $rejectUseCase = app(\App\Src\Application\UseCases\Quotations\RejectQuotationUseCase::class);
+        $rejectUseCase = app(RejectQuotationUseCase::class);
         $rejectUseCase->execute($q->id, 'Presupuesto no disponible');
         $q->refresh();
         $this->assertEquals(QuotationStatus::REJECTED->value, $q->status);

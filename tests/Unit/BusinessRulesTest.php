@@ -5,8 +5,13 @@ namespace Tests\Unit;
 use App\Models\User;
 use App\Src\Domain\Enums\QuotationStatus;
 use App\Src\Domain\Enums\ContractStatus;
+use App\Src\Domain\Entities\Contract as ContractEntity;
+use App\Src\Domain\Entities\Quotation as QuotationEntity;
 use App\Src\Domain\Enums\ProspectStatus;
+use App\Src\Domain\ValueObjects\Money;
+use App\Src\Domain\ValueObjects\SignedPdf;
 use App\Src\Infrastructure\Persistence\Models\Contract;
+use Database\Seeders\RolePermissionSeeder;
 use App\Src\Infrastructure\Persistence\Models\ContractAmendment;
 use App\Src\Infrastructure\Persistence\Models\Prospect;
 use App\Src\Infrastructure\Persistence\Models\Quotation;
@@ -36,7 +41,7 @@ class BusinessRulesTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
+        $this->seed(RolePermissionSeeder::class);
 
         $this->admin = User::factory()->create(['name' => 'Admin']);
         $this->admin->assignRole('admin');
@@ -77,16 +82,16 @@ class BusinessRulesTest extends TestCase
 
         $this->assertTrue($this->commercialManager->can('quotations.approve'));
 
-        $entity = new \App\Src\Domain\Entities\Quotation(
+        $entity = new QuotationEntity(
             id: $quotation->id,
             quoteNumber: $quotation->quote_number,
             prospectId: $quotation->prospect_id,
             planId: null,
             createdBy: $quotation->created_by,
             status: QuotationStatus::UNDER_REVIEW,
-            subtotal: new \App\Src\Domain\ValueObjects\Money(100000),
-            tax: new \App\Src\Domain\ValueObjects\Money(19000),
-            total: new \App\Src\Domain\ValueObjects\Money(119000),
+            subtotal: new Money(100000),
+            tax: new Money(19000),
+            total: new Money(119000),
             validUntil: null,
         );
 
@@ -157,7 +162,7 @@ class BusinessRulesTest extends TestCase
             'domain.contract.pending_document_status_required'
         );
 
-        $contractEntity = new \App\Src\Domain\Entities\Contract(
+        $contractEntity = new ContractEntity(
             id: $contract->id,
             contractNumber: $contract->contract_number,
             quotationId: $contract->quotation_id,
@@ -170,7 +175,7 @@ class BusinessRulesTest extends TestCase
         );
 
         $contractEntity->uploadDocument(
-            new \App\Src\Domain\ValueObjects\SignedPdf('test.pdf', 'test.pdf', 100)
+            new SignedPdf('test.pdf', 'test.pdf', 100)
         );
     }
 
